@@ -541,60 +541,146 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
-/* ─── Navbar Mobile Styles ───────────────────────────────────────────────── */
-@media (max-width: 860px) {
-  /* Hide nav label text, show only icons */
-  .nav-label {
-    display: none;
-  }
+/* ─── Responsive Navigation & Mobile Dock ───────────────────────────────── */
 
-  /* Reduce nav button padding when icon-only */
-  .nav-tab-btn {
-    padding: 8px !important;
-    min-width: 38px;
-  }
-
-  /* Brand: hide subtitle text on mid-screen */
-  .brand-badge {
-    display: none;
-  }
+/* Mặc định trên desktop: ẩn thanh dock dưới đáy */
+.mobile-bottom-dock {
+  display: none;
 }
 
-@media (max-width: 600px) {
-  /* Full mobile: move nav to bottom sticky bar */
-  .navbar-center-nav {
+@media (max-width: 820px) {
+  /* Ẩn các chi tiết chữ trên header để không bị chật */
+  .navbar-desktop-nav {
+    display: none !important;
+  }
+  
+  .desktop-only-badge,
+  .desktop-only-text,
+  .desktop-only-user,
+  .desktop-only-logout {
+    display: none !important;
+  }
+
+  .navbar-header {
+    height: 56px !important;
+  }
+
+  .navbar-header .container {
+    height: 56px !important;
+    padding: 0 12px !important;
+  }
+
+  .navbar-top-btn {
+    width: 34px !important;
+    height: 34px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0 !important;
+  }
+
+  .navbar-avatar-btn {
+    width: 34px !important;
+    height: 34px !important;
+    padding: 2px !important;
+    justify-content: center !important;
+  }
+
+  /* Tạo khoảng trống dưới cùng để nội dung trang không bị dock che */
+  .main-content-area {
+    padding-bottom: 95px !important;
+  }
+
+  /* HIỆN THANH ĐIỀU HƯỚNG DƯỚI ĐÁY MÀN HÌNH CHUẨN APP MOBILE */
+  .mobile-bottom-dock {
+    display: flex !important;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    top: auto !important;
-    z-index: 200;
-    background: var(--surface-glass) !important;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid var(--border-subtle) !important;
-    border-bottom: none !important;
-    border-radius: 0 !important;
-    padding: 8px 12px !important;
-    justify-content: space-around !important;
-    width: 100%;
-    gap: 0 !important;
+    z-index: 999;
+    height: 62px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom, 12px));
+    background: var(--surface-glass, rgba(15, 23, 42, 0.95)) !important;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid var(--border-subtle);
+    align-items: center;
+    justify-content: space-around;
+    padding-left: 8px;
+    padding-right: 8px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
   }
 
-  /* Add bottom padding to main content so it's not covered */
-  .main-content-area {
-    padding-bottom: 80px !important;
+  .mobile-dock-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    height: 100%;
+    min-height: 48px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    padding: 4px 0;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  /* Hide brand name text on very small screens */
-  .brand-name {
-    display: none;
+  .mobile-dock-btn:active {
+    transform: scale(0.92);
   }
 
-  /* Header: reduce height on mobile */
-  .navbar-header {
-    height: 52px !important;
+  .mobile-dock-btn.active {
+    color: #34d399;
+  }
+
+  .mobile-dock-label {
+    font-size: 10.5px;
+    font-weight: 600;
+    margin-top: 3px;
+    letter-spacing: -0.2px;
+    white-space: nowrap;
+  }
+
+  .mobile-dock-active-dot {
+    position: absolute;
+    top: 3px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 6px #10b981;
+  }
+
+  /* Nút Quét AI nổi bật ở giữa */
+  .mobile-dock-center-action {
+    position: relative;
+    top: -10px;
+    flex: 1.1;
+  }
+
+  .mobile-dock-scanner-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #10b981, #059669);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.5), 0 0 0 4px var(--bg-primary, #0b1120);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .mobile-dock-center-action:active .mobile-dock-scanner-circle {
+    transform: scale(0.9);
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.4);
   }
 }
+
 
 
