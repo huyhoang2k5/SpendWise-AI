@@ -44,6 +44,11 @@ const transactionSchema = new mongoose.Schema({
     enum: ['food', 'shopping', 'transport', 'education', 'living', 'other'],
     default: 'other'
   },
+  customCategory: {
+    type: String,
+    default: '',
+    trim: true
+  },
   paymentMethod: {
     type: String,
     default: 'Không rõ'

@@ -784,7 +784,7 @@ export default function MonthTransactionsModal({
                               {tx.merchant}
                             </span>
                             <span className={`badge ${categoryMeta.badgeClass}`} style={{ fontSize: '11px', padding: '2px 8px' }}>
-                              {categoryMeta.name}
+                              {tx.customCategory || categoryMeta.name}
                             </span>
                             {tx.invoiceNumber && (
                               <span style={{

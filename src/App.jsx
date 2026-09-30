@@ -24,6 +24,7 @@ export default function App() {
   const [transactions, setTransactions] = useState([]);
   const [monthlyBudget, setMonthlyBudget] = useState(10000000);
   const [categoryBudgets, setCategoryBudgets] = useState({});
+  const [categoryCustomNames, setCategoryCustomNames] = useState({});
   const [apiKey, setApiKey] = useState('');
   const [theme, setTheme] = useState('dark');
 
@@ -89,6 +90,7 @@ export default function App() {
           setCurrentUser(user);
           setMonthlyBudget(user.monthlyBudget || 10000000);
           setCategoryBudgets(user.categoryBudgets || {});
+          setCategoryCustomNames(user.categoryCustomNames || {});
           await loadTransactions();
         } catch {
           authApi.logout();
@@ -106,6 +108,7 @@ export default function App() {
     setCurrentUser(user);
     setMonthlyBudget(user.monthlyBudget || 10000000);
     setCategoryBudgets(user.categoryBudgets || {});
+    setCategoryCustomNames(user.categoryCustomNames || {});
     await loadTransactions();
     addToast(`Chào mừng ${user.name}! Đã kết nối cơ sở dữ liệu đám mây.`);
   };
@@ -212,6 +215,17 @@ export default function App() {
       await authApi.updateProfile({ categoryBudgets: budgets });
       setCategoryBudgets(budgets);
       addToast('Đã cập nhật ngân sách danh mục trên Cloud!');
+    } catch (err) {
+      addToast(`Lỗi: ${err.message}`, 'error');
+    }
+  };
+
+  const handleUpdateCategoryCustomNames = async (customNames) => {
+    if (!currentUser) return;
+    try {
+      await authApi.updateProfile({ categoryCustomNames: customNames });
+      setCategoryCustomNames(customNames);
+      addToast('Đã cập nhật tên danh mục tùy chỉnh!');
     } catch (err) {
       addToast(`Lỗi: ${err.message}`, 'error');
     }
@@ -384,8 +398,10 @@ export default function App() {
               transactions={transactions}
               monthlyBudget={monthlyBudget}
               categoryBudgets={categoryBudgets}
+              categoryCustomNames={categoryCustomNames}
               onUpdateMonthlyBudget={handleUpdateMonthlyBudget}
               onUpdateCategoryBudgets={handleUpdateCategoryBudgets}
+              onUpdateCategoryCustomNames={handleUpdateCategoryCustomNames}
             />
           )}
           {currentTab === 'advisor' && (

@@ -37,6 +37,7 @@ export default function ManualExpenseModal({ isOpen, onClose, onAddTransaction }
   const [merchant, setMerchant] = useState('');
   const [total, setTotal] = useState('');
   const [category, setCategory] = useState('food');
+  const [customCategory, setCustomCategory] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentMethod, setPaymentMethod] = useState('Tiền mặt');
   const [notes, setNotes] = useState('');
@@ -63,6 +64,7 @@ export default function ManualExpenseModal({ isOpen, onClose, onAddTransaction }
       merchant: merchant.trim(),
       total: numTotal,
       category,
+      customCategory: category === 'other' ? customCategory.trim() : '',
       date,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       paymentMethod,
@@ -75,6 +77,7 @@ export default function ManualExpenseModal({ isOpen, onClose, onAddTransaction }
 
     setMerchant('');
     setTotal('');
+    setCustomCategory('');
     setNotes('');
     setShowAdvanced(false);
     onClose();
@@ -264,6 +267,23 @@ export default function ManualExpenseModal({ isOpen, onClose, onAddTransaction }
               );
             })}
           </div>
+
+          {/* Custom Category Input if "Khác" is selected */}
+          {category === 'other' && (
+            <div style={{ marginBottom: '12px', animation: 'fadeIn 0.2s ease' }}>
+              <label style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
+                Tên danh mục khác:
+              </label>
+              <input
+                type="text"
+                className="input"
+                placeholder="Ghi tên bạn muốn (ví dụ: Nuôi mèo, Gym, Tiền trọ...)"
+                value={customCategory}
+                onChange={(e) => setCustomCategory(e.target.value)}
+                style={{ fontSize: '12.5px', padding: '7px 10px', borderRadius: '8px', width: '100%' }}
+              />
+            </div>
+          )}
 
           {/* Collapsible Details */}
           <div style={{

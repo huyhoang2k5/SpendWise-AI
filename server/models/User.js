@@ -49,6 +49,11 @@ const userSchema = new mongoose.Schema({
     type: Map,
     of: Number,
     default: {}
+  },
+  categoryCustomNames: {
+    type: Map,
+    of: String,
+    default: {}
   }
 }, {
   timestamps: true   // Tự thêm createdAt, updatedAt

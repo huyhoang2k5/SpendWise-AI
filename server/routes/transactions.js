@@ -43,7 +43,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const {
-      merchant, total, date, time, address, category, paymentMethod,
+      merchant, total, date, time, address, category, customCategory, paymentMethod,
       invoiceNumber, notes, items, vat, discount, confidence, imageUrl, source
     } = req.body;
 
@@ -76,6 +76,7 @@ router.post('/', async (req, res) => {
       time: time || '',
       address: address || '',
       category: safeCategory,
+      customCategory: customCategory ? String(customCategory).trim() : '',
       paymentMethod: paymentMethod || 'Không rõ',
       invoiceNumber: invoiceNumber || '',
       notes: notes || '',
@@ -111,7 +112,7 @@ router.put('/:id', async (req, res) => {
     }
 
     const validCategories = ['food', 'shopping', 'transport', 'education', 'living', 'other'];
-    const allowed = ['merchant', 'total', 'date', 'time', 'address', 'category', 'paymentMethod',
+    const allowed = ['merchant', 'total', 'date', 'time', 'address', 'category', 'customCategory', 'paymentMethod',
                      'invoiceNumber', 'notes', 'items', 'vat', 'discount'];
     allowed.forEach(field => {
       if (req.body[field] !== undefined) {

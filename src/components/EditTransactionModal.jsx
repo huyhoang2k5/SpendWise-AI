@@ -182,6 +182,23 @@ export default function EditTransactionModal({ isOpen, onClose, transaction, onU
             })}
           </div>
 
+          {/* Custom Category Input if "Khác" is selected */}
+          {formData.category === 'other' && (
+            <div style={{ marginBottom: '12px', animation: 'fadeIn 0.2s ease' }}>
+              <label style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
+                Tên danh mục khác:
+              </label>
+              <input
+                type="text"
+                className="input"
+                placeholder="Ghi tên bạn muốn (ví dụ: Nuôi mèo, Gym, Tiền trọ...)"
+                value={formData.customCategory || ''}
+                onChange={(e) => handleFieldChange('customCategory', e.target.value)}
+                style={{ fontSize: '12.5px', padding: '7px 10px', borderRadius: '8px', width: '100%' }}
+              />
+            </div>
+          )}
+
           {/* Date & Payment */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
             <input

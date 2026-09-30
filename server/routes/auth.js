@@ -107,7 +107,7 @@ router.get('/me', protect, async (req, res) => {
 // ─── PUT /api/auth/profile — Cập nhật hồ sơ cá nhân ────────────────────
 router.put('/profile', protect, async (req, res) => {
   try {
-    const { name, email, role, roleCode, avatar, password, monthlyBudget, categoryBudgets } = req.body;
+    const { name, email, role, roleCode, avatar, password, monthlyBudget, categoryBudgets, categoryCustomNames } = req.body;
 
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ error: 'Tài khoản không tồn tại.' });
@@ -122,6 +122,10 @@ router.put('/profile', protect, async (req, res) => {
     if (categoryBudgets !== undefined) {
       user.set('categoryBudgets', categoryBudgets);
       user.markModified('categoryBudgets');
+    }
+    if (categoryCustomNames !== undefined) {
+      user.set('categoryCustomNames', categoryCustomNames);
+      user.markModified('categoryCustomNames');
     }
 
     // Đổi mật khẩu nếu có

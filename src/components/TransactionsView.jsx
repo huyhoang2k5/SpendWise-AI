@@ -289,7 +289,7 @@ export default function TransactionsView({
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <h4 style={{ fontSize: '15px', fontWeight: '700' }}>{tx.merchant}</h4>
                         <span className={`badge ${cat.badgeClass}`}>
-                          {cat.name}
+                          {tx.customCategory || cat.name}
                         </span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '3px', fontSize: '12px', color: 'var(--text-muted)' }}>

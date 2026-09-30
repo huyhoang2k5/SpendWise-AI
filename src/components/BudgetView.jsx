@@ -39,20 +39,32 @@ export default function BudgetView({
   transactions, 
   monthlyBudget, 
   categoryBudgets, 
+  categoryCustomNames = {},
   onUpdateMonthlyBudget, 
-  onUpdateCategoryBudgets 
+  onUpdateCategoryBudgets,
+  onUpdateCategoryCustomNames 
 }) {
   const stats = analyticsService.calculateStats(transactions, monthlyBudget, categoryBudgets);
   const [editingBudget, setEditingBudget] = useState(false);
   const [tempMonthlyBudget, setTempMonthlyBudget] = useState(monthlyBudget);
   const [tempCatBudgets, setTempCatBudgets] = useState({ ...(categoryBudgets || {}) });
+  const [customNames, setCustomNames] = useState({ ...(categoryCustomNames || {}) });
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [inputBudgets, setInputBudgets] = useState({});
+  const [customNameInputs, setCustomNameInputs] = useState({});
+  
+  // Inline rename state on card
+  const [editingNameKey, setEditingNameKey] = useState(null);
+  const [editingNameVal, setEditingNameVal] = useState('');
 
   // Sync with prop updates
   useEffect(() => {
     setTempCatBudgets({ ...(categoryBudgets || {}) });
   }, [categoryBudgets]);
+
+  useEffect(() => {
+    setCustomNames({ ...(categoryCustomNames || {}) });
+  }, [categoryCustomNames]);
 
   useEffect(() => {
     setTempMonthlyBudget(monthlyBudget);
@@ -82,10 +94,13 @@ export default function BudgetView({
       const percent = currentCatBudget > 0 ? (amount / currentCatBudget) * 100 : 0;
       const isOver = amount > currentCatBudget;
       const isNear = percent >= 80 && !isOver;
+      const displayName = customNames[key] || meta.name;
 
       return {
         key,
         name: meta.name,
+        displayName,
+        hasCustomName: Boolean(customNames[key]),
         color: meta.color,
         bgColor: meta.bgColor,
         borderColor: meta.borderColor,
@@ -97,7 +112,7 @@ export default function BudgetView({
         isNear
       };
     });
-  }, [trackedKeys, tempCatBudgets, stats.categoryBreakdown]);
+  }, [trackedKeys, tempCatBudgets, customNames, stats.categoryBreakdown]);
 
   // Save changes
   const handleSaveBudgets = () => {
@@ -141,7 +156,16 @@ export default function BudgetView({
     setTempCatBudgets(updated);
     onUpdateCategoryBudgets(updated);
 
-    // If all remaining are added, close modal
+    // Save custom name if specified
+    const customName = (customNameInputs[catKey] || '').trim();
+    if (customName && customName !== meta.name) {
+      const updatedNames = { ...customNames, [catKey]: customName };
+      setCustomNames(updatedNames);
+      if (onUpdateCategoryCustomNames) {
+        onUpdateCategoryCustomNames(updatedNames);
+      }
+    }
+
     if (availableCategories.length <= 1) {
       setIsAddModalOpen(false);
     }
@@ -153,19 +177,59 @@ export default function BudgetView({
     delete updated[catKey];
     setTempCatBudgets(updated);
     onUpdateCategoryBudgets(updated);
+
+    if (customNames[catKey]) {
+      const updatedNames = { ...customNames };
+      delete updatedNames[catKey];
+      setCustomNames(updatedNames);
+      if (onUpdateCategoryCustomNames) {
+        onUpdateCategoryCustomNames(updatedNames);
+      }
+    }
+  };
+
+  // Save inline custom name
+  const handleSaveCatName = (catKey) => {
+    const meta = EXPENSE_CATEGORIES[catKey];
+    const trimmed = editingNameVal.trim();
+    const updatedNames = { ...customNames };
+    
+    if (trimmed && trimmed !== meta?.name) {
+      updatedNames[catKey] = trimmed;
+    } else {
+      delete updatedNames[catKey];
+    }
+
+    setCustomNames(updatedNames);
+    if (onUpdateCategoryCustomNames) {
+      onUpdateCategoryCustomNames(updatedNames);
+    }
+    setEditingNameKey(null);
   };
 
   // Add all remaining categories
   const handleAddAllCategories = () => {
     const updated = { ...tempCatBudgets };
+    const updatedNames = { ...customNames };
+
     availableCategories.forEach(([key, meta]) => {
       const customVal = inputBudgets[key];
       updated[key] = (customVal !== undefined && customVal !== '' && Number(customVal) >= 0)
         ? Number(customVal)
         : (meta.defaultBudget || 2000000);
+
+      const customName = (customNameInputs[key] || '').trim();
+      if (customName && customName !== meta.name) {
+        updatedNames[key] = customName;
+      }
     });
+
     setTempCatBudgets(updated);
     onUpdateCategoryBudgets(updated);
+    setCustomNames(updatedNames);
+    if (onUpdateCategoryCustomNames) {
+      onUpdateCategoryCustomNames(updatedNames);
+    }
     setIsAddModalOpen(false);
   };
 
@@ -429,6 +493,7 @@ export default function BudgetView({
               const isOver = cat.isOver;
               const isNear = cat.isNear;
               const CatIcon = CATEGORY_ICONS[cat.key] || MoreHorizontal;
+              const isEditingThisName = editingNameKey === cat.key;
 
               return (
                 <div
@@ -451,7 +516,7 @@ export default function BudgetView({
                 >
                   {/* Header */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: '1', minWidth: 0 }}>
                       <span style={{
                         width: '32px',
                         height: '32px',
@@ -460,21 +525,99 @@ export default function BudgetView({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: cat.color
+                        color: cat.color,
+                        flexShrink: 0
                       }}>
                         <CatIcon size={16} />
                       </span>
-                      <h4 style={{ fontSize: '15px', fontWeight: '700', margin: 0 }}>{cat.name}</h4>
+
+                      {/* Title & Rename */}
+                      {isEditingThisName ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: '1' }}>
+                          <input
+                            type="text"
+                            className="input"
+                            style={{
+                              padding: '2px 8px',
+                              fontSize: '13.5px',
+                              fontWeight: '700',
+                              height: '28px',
+                              borderRadius: '6px',
+                              maxWidth: '150px'
+                            }}
+                            value={editingNameVal}
+                            onChange={(e) => setEditingNameVal(e.target.value)}
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveCatName(cat.key);
+                              if (e.key === 'Escape') setEditingNameKey(null);
+                            }}
+                            placeholder="Tên danh mục..."
+                          />
+                          <button
+                            onClick={() => handleSaveCatName(cat.key)}
+                            className="btn-ghost"
+                            style={{ padding: '4px', color: 'var(--emerald-400)' }}
+                            title="Lưu tên"
+                          >
+                            <Check size={14} />
+                          </button>
+                          <button
+                            onClick={() => setEditingNameKey(null)}
+                            className="btn-ghost"
+                            style={{ padding: '4px', color: 'var(--text-muted)' }}
+                            title="Hủy"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                          <h4 
+                            style={{ 
+                              fontSize: '15px', 
+                              fontWeight: '700', 
+                              margin: 0,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}
+                            title={cat.hasCustomName ? `${cat.displayName} (${cat.name})` : cat.displayName}
+                          >
+                            {cat.displayName}
+                          </h4>
+                          {/* Edit button for custom name (especially helpful for 'Khác') */}
+                          <button
+                            onClick={() => {
+                              setEditingNameKey(cat.key);
+                              setEditingNameVal(cat.displayName);
+                            }}
+                            className="btn-ghost"
+                            style={{
+                              padding: '2px 4px',
+                              borderRadius: '4px',
+                              color: 'var(--text-muted)',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                            title="Đổi tên danh mục"
+                          >
+                            <Edit3 size={12} />
+                          </button>
+                        </div>
+                      )}
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                       <span className={`badge ${cat.badgeClass}`}>
                         {isOver ? 'Vượt' : isNear ? 'Cảnh báo' : 'Tốt'}
                       </span>
                       <button
                         onClick={() => handleRemoveCategory(cat.key)}
                         className="btn-ghost"
-                        title={`Bỏ theo dõi ${cat.name}`}
+                        title={`Bỏ theo dõi ${cat.displayName}`}
                         style={{
                           padding: '4px',
                           borderRadius: '6px',
@@ -602,7 +745,7 @@ export default function BudgetView({
               <div>
                 <h3 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>Thêm danh mục ngân sách</h3>
                 <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '4px 0 0' }}>
-                  Chọn danh mục bạn muốn đặt hạn mức chi tiêu
+                  Chọn danh mục và thiết lập hạn mức chi tiêu
                 </p>
               </div>
               <button
@@ -628,83 +771,122 @@ export default function BudgetView({
                 {availableCategories.map(([key, cat]) => {
                   const CatIcon = CATEGORY_ICONS[key] || MoreHorizontal;
                   const currentInput = inputBudgets[key] !== undefined ? inputBudgets[key] : cat.defaultBudget;
+                  const currentNameInput = customNameInputs[key] !== undefined ? customNameInputs[key] : (customNames[key] || '');
 
                   return (
                     <div
                       key={key}
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '12px',
                         padding: '12px 14px',
                         borderRadius: '12px',
                         background: 'var(--bg-tertiary)',
                         border: '1px solid var(--border-subtle)',
-                        flexWrap: 'wrap'
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px'
                       }}
                     >
-                      {/* Left: Icon & Name */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: '130px' }}>
-                        <span style={{
-                          width: '34px',
-                          height: '34px',
-                          borderRadius: '8px',
-                          background: cat.bgColor || 'rgba(255,255,255,0.06)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: cat.color
-                        }}>
-                          <CatIcon size={18} />
-                        </span>
-                        <div>
-                          <div style={{ fontSize: '14px', fontWeight: '700' }}>{cat.name}</div>
-                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                            Gợi ý: {analyticsService.formatCurrency(cat.defaultBudget)}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '12px',
+                        flexWrap: 'wrap'
+                      }}>
+                        {/* Left: Icon & Name */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: '130px' }}>
+                          <span style={{
+                            width: '34px',
+                            height: '34px',
+                            borderRadius: '8px',
+                            background: cat.bgColor || 'rgba(255,255,255,0.06)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: cat.color
+                          }}>
+                            <CatIcon size={18} />
+                          </span>
+                          <div>
+                            <div style={{ fontSize: '14px', fontWeight: '700' }}>{cat.name}</div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                              Gợi ý: {analyticsService.formatCurrency(cat.defaultBudget)}
+                            </div>
                           </div>
                         </div>
+
+                        {/* Right: Budget input & Add button */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1', justifyContent: 'flex-end' }}>
+                          <div style={{ position: 'relative', width: '130px' }}>
+                            <input
+                              type="number"
+                              className="input"
+                              style={{
+                                padding: '5px 8px',
+                                height: '32px',
+                                fontSize: '13px',
+                                textAlign: 'right',
+                                fontFamily: 'var(--font-mono)'
+                              }}
+                              value={currentInput}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setInputBudgets(prev => ({ ...prev, [key]: val }));
+                              }}
+                              placeholder={cat.defaultBudget.toString()}
+                            />
+                          </div>
+
+                          <button
+                            onClick={() => handleAddCategory(key)}
+                            className="btn btn-primary"
+                            style={{
+                              padding: '6px 12px',
+                              height: '32px',
+                              fontSize: '12.5px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            <Plus size={14} />
+                            <span>Thêm</span>
+                          </button>
+                        </div>
                       </div>
 
-                      {/* Right: Budget input & Add button */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1', justifyContent: 'flex-end' }}>
-                        <div style={{ position: 'relative', width: '130px' }}>
+                      {/* If category is 'other' (Khác), allow typing custom name */}
+                      {key === 'other' && (
+                        <div style={{
+                          borderTop: '1px dashed var(--border-subtle)',
+                          paddingTop: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}>
+                          <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                            Tùy chỉnh tên:
+                          </span>
                           <input
-                            type="number"
+                            type="text"
                             className="input"
                             style={{
-                              padding: '5px 8px',
-                              height: '32px',
-                              fontSize: '13px',
-                              textAlign: 'right',
-                              fontFamily: 'var(--font-mono)'
+                              padding: '4px 8px',
+                              height: '28px',
+                              fontSize: '12px',
+                              flex: 1,
+                              borderRadius: '6px'
                             }}
-                            value={currentInput}
+                            placeholder="Ghi tên bạn muốn (ví dụ: Nuôi mèo, Gym, Tiền trọ...)"
+                            value={currentNameInput}
                             onChange={(e) => {
                               const val = e.target.value;
-                              setInputBudgets(prev => ({ ...prev, [key]: val }));
+                              setCustomNameInputs(prev => ({ ...prev, [key]: val }));
                             }}
-                            placeholder={cat.defaultBudget.toString()}
                           />
                         </div>
-
-                        <button
-                          onClick={() => handleAddCategory(key)}
-                          className="btn btn-primary"
-                          style={{
-                            padding: '6px 12px',
-                            height: '32px',
-                            fontSize: '12.5px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            whiteSpace: 'nowrap'
-                          }}
-                        >
-                          <Plus size={14} />
-                          <span>Thêm</span>
-                        </button>
-                      </div>
+                      )}
                     </div>
                   );
                 })}
