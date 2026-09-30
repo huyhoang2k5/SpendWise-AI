@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   UploadCloud, 
   Camera, 
@@ -15,7 +15,10 @@ import {
   Layers,
   ArrowRight,
   RefreshCw,
-  FileCheck
+  FileCheck,
+  Image as ImageIcon,
+  X,
+  SwitchCamera
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { EXPENSE_CATEGORIES } from '../constants/categories';
@@ -31,6 +34,96 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
   const [parsedData, setParsedData] = useState(null);
   const [scanError, setScanError] = useState(null);
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  const [isLiveCameraOpen, setIsLiveCameraOpen] = useState(false);
+  const [facingMode, setFacingMode] = useState('environment');
+
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleStartCamera = async () => {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        setIsLiveCameraOpen(true);
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: facingMode },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        });
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(e => console.log('Play err:', e));
+        }
+      } catch (err) {
+        console.warn('Live camera error, opening system camera:', err);
+        stopLiveCamera();
+        cameraInputRef.current?.click();
+      }
+    } else {
+      cameraInputRef.current?.click();
+    }
+  };
+
+  const stopLiveCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setIsLiveCameraOpen(false);
+  };
+
+  const toggleFacingMode = async () => {
+    const newFacing = facingMode === 'environment' ? 'user' : 'environment';
+    setFacingMode(newFacing);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: newFacing },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        }
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(e => console.log('Play err:', e));
+      }
+    } catch (e) {
+      console.warn('Switch camera error:', e);
+    }
+  };
+
+  const captureLivePhoto = () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    stopLiveCamera();
+
+    setImageSrc(dataUrl);
+    setSvgPreview(null);
+    setScanError(null);
+    startScan({ imageBase64: dataUrl });
+  };
 
   // Handle uploading real image file
   const handleFileUpload = (e) => {
@@ -161,8 +254,8 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
 
   return (
     <div style={{ padding: '36px 0 60px' }}>
-      {/* Title Header */}
-      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+      {/* Title Header - Desktop Version (Giữ nguyên cho Laptop) */}
+      <div className="desktop-only-scanner" style={{ textAlign: 'center', marginBottom: '32px' }}>
         <div style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -184,6 +277,32 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
         </h1>
         <p style={{ color: 'var(--text-secondary)', maxWidth: '640px', margin: '0 auto', fontSize: '15px' }}>
           Tải ảnh hóa đơn siêu thị, quán cà phê hoặc biên lai điện tử. Hệ thống AI tự động bóc tách chi tiết từng sản phẩm, số tiền và đưa vào nhóm chi tiêu phù hợp.
+        </p>
+      </div>
+
+      {/* Title Header - Mobile Version (Tối ưu cho Điện Thoại) */}
+      <div className="mobile-only-scanner" style={{ marginBottom: '18px' }}>
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          padding: '4px 12px',
+          borderRadius: '9999px',
+          background: 'rgba(16, 185, 129, 0.12)',
+          border: '1px solid rgba(16, 185, 129, 0.25)',
+          color: '#34d399',
+          fontSize: '11.5px',
+          fontWeight: '700',
+          marginBottom: '8px'
+        }}>
+          <Sparkles size={13} />
+          <span>AI Camera Vision</span>
+        </div>
+        <h1 style={{ fontSize: '22px', fontWeight: '800', marginBottom: '4px' }}>
+          Quét Hóa Đơn Bằng Camera AI
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>
+          Chụp ảnh hóa đơn trực tiếp bằng camera điện thoại để AI tự động nhận diện chi tiêu.
         </p>
       </div>
 
@@ -223,7 +342,107 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
             </div>
           )}
 
-          {/* Upload Dropzone */}
+          {/* Hidden File Inputs */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            accept="image/*"
+            style={{ display: 'none' }}
+          />
+          <input
+            type="file"
+            ref={cameraInputRef}
+            onChange={handleFileUpload}
+            accept="image/*"
+            capture="environment"
+            style={{ display: 'none' }}
+          />
+
+          {/* MOBILE SCANNER HERO CARD (Chuyên dụng cho Điện Thoại) */}
+          <div className="mobile-only-scanner" style={{ marginBottom: '24px' }}>
+            <div style={{
+              background: 'linear-gradient(145deg, rgba(16, 185, 129, 0.14), rgba(6, 182, 212, 0.08))',
+              border: '1.5px solid rgba(16, 185, 129, 0.35)',
+              borderRadius: '20px',
+              padding: '24px 18px',
+              textAlign: 'center',
+              boxShadow: '0 8px 24px rgba(16, 185, 129, 0.12)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <div 
+                onClick={handleStartCamera}
+                className="mobile-camera-pulse-btn"
+                style={{
+                  width: '76px',
+                  height: '76px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                  boxShadow: '0 0 25px rgba(16, 185, 129, 0.55), 0 0 0 8px rgba(16, 185, 129, 0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px',
+                  color: '#ffffff',
+                  cursor: 'pointer',
+                  transition: 'transform 0.15s ease',
+                  WebkitTapHighlightColor: 'transparent'
+                }}
+              >
+                <Camera size={38} strokeWidth={2.2} />
+              </div>
+
+              <h2 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '6px', color: 'var(--text-primary)' }}>
+                Chụp Hóa Đơn Bằng Camera
+              </h2>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '18px', lineHeight: 1.45 }}>
+                Mở camera điện thoại chụp ngay hóa đơn ăn uống, siêu thị, vé xe, tiền điện nước
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={handleStartCamera}
+                  className="btn btn-primary"
+                  style={{
+                    width: '100%',
+                    height: '46px',
+                    fontSize: '14px',
+                    fontWeight: '700',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)'
+                  }}
+                >
+                  <Camera size={18} />
+                  <span>Mở Camera Quét Trực Tiếp</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="btn btn-secondary"
+                  style={{
+                    width: '100%',
+                    height: '42px',
+                    fontSize: '13.5px',
+                    fontWeight: '600',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    borderRadius: '12px'
+                  }}
+                >
+                  <ImageIcon size={17} color="var(--emerald-400)" />
+                  <span>Chọn ảnh có sẵn từ Thư viện</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* DESKTOP UPLOAD DROPZONE (Giữ nguyên 100% cho Laptop) */}
+          <div className="desktop-only-scanner">
           <div
             onClick={() => fileInputRef.current?.click()}
             style={{
@@ -283,6 +502,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
                 <span>Chọn ảnh từ thiết bị</span>
               </button>
             </div>
+          </div>
           </div>
 
           {/* Real-world Receipt Scanning Guide */}
@@ -711,6 +931,225 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
                   Hủy bỏ
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Live Camera Viewfinder Modal */}
+      {isLiveCameraOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 99999,
+          background: '#070b14',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          paddingTop: 'max(12px, env(safe-area-inset-top, 12px))',
+          paddingBottom: 'max(20px, env(safe-area-inset-bottom, 20px))'
+        }}>
+          {/* Top Bar */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '12px 18px',
+            zIndex: 10
+          }}>
+            <button
+              onClick={stopLiveCamera}
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: 'none',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
+            >
+              <X size={22} />
+            </button>
+
+            <div style={{
+              fontSize: '14.5px',
+              fontWeight: '700',
+              color: '#ffffff',
+              background: 'rgba(0, 0, 0, 0.6)',
+              padding: '6px 16px',
+              borderRadius: '9999px',
+              backdropFilter: 'blur(10px)',
+              letterSpacing: '0.2px'
+            }}>
+              Căn chỉnh hóa đơn
+            </div>
+
+            <button
+              onClick={toggleFacingMode}
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: 'none',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
+              title="Đổi camera trước / sau"
+            >
+              <SwitchCamera size={20} />
+            </button>
+          </div>
+
+          {/* Viewfinder Window */}
+          <div style={{
+            position: 'relative',
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            margin: '0 12px',
+            borderRadius: '24px'
+          }}>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
+              }}
+            />
+
+            {/* Guide overlay */}
+            <div style={{
+              position: 'absolute',
+              width: '84%',
+              height: '76%',
+              border: '2px solid rgba(16, 185, 129, 0.7)',
+              borderRadius: '16px',
+              boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.55)',
+              pointerEvents: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              padding: '12px'
+            }}>
+              <div className="camera-live-laser" />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ width: '22px', height: '22px', borderTop: '4px solid #10b981', borderLeft: '4px solid #10b981', borderTopLeftRadius: '8px' }} />
+                <div style={{ width: '22px', height: '22px', borderTop: '4px solid #10b981', borderRight: '4px solid #10b981', borderTopRightRadius: '8px' }} />
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <span style={{
+                  fontSize: '12px',
+                  color: '#ffffff',
+                  background: 'rgba(16, 185, 129, 0.9)',
+                  padding: '5px 12px',
+                  borderRadius: '6px',
+                  fontWeight: '700',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                }}>
+                  Giữ hóa đơn phẳng và rõ nét
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ width: '22px', height: '22px', borderBottom: '4px solid #10b981', borderLeft: '4px solid #10b981', borderBottomLeftRadius: '8px' }} />
+                <div style={{ width: '22px', height: '22px', borderBottom: '4px solid #10b981', borderRight: '4px solid #10b981', borderBottomRightRadius: '8px' }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Shutter Controls */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '16px 20px',
+            zIndex: 10
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', width: '100%', maxWidth: '340px' }}>
+              <button
+                onClick={() => {
+                  stopLiveCamera();
+                  cameraInputRef.current?.click();
+                }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'rgba(255, 255, 255, 0.85)',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                <Camera size={20} color="#34d399" />
+                <span>Camera máy</span>
+              </button>
+
+              <button
+                onClick={captureLivePhoto}
+                style={{
+                  width: '74px',
+                  height: '74px',
+                  borderRadius: '50%',
+                  background: 'transparent',
+                  border: '4px solid #ffffff',
+                  padding: '4px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 0 24px rgba(16, 185, 129, 0.7)'
+                }}
+              >
+                <div style={{
+                  width: '100%',
+                  height: '100%',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #10b981, #059669)'
+                }} />
+              </button>
+
+              <button
+                onClick={() => {
+                  stopLiveCamera();
+                  fileInputRef.current?.click();
+                }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'rgba(255, 255, 255, 0.85)',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                <ImageIcon size={20} color="#38bdf8" />
+                <span>Thư viện</span>
+              </button>
             </div>
           </div>
         </div>
