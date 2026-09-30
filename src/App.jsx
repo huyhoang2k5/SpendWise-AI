@@ -391,6 +391,7 @@ export default function App() {
               onUpdateTransaction={handleUpdateTransaction}
               onNavigateToScanner={() => setCurrentTab('scanner')}
               openManualModal={() => setIsManualModalOpen(true)}
+              onClearData={handleClearData}
             />
           )}
           {currentTab === 'budget' && (
@@ -419,7 +420,7 @@ export default function App() {
       <footer style={{
         borderTop: '1px solid var(--border-subtle)',
         background: 'var(--surface-card)',
-        padding: '28px 0',
+        padding: '14px 0',
         marginTop: 'auto'
       }}>
         <div className="container" style={{
@@ -427,28 +428,46 @@ export default function App() {
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: '16px',
+          gap: '12px',
           fontSize: '13px',
           color: 'var(--text-muted)'
         }}>
-          <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>SpendWise AI</span>
-            <span> – AI Đọc Hóa Đơn & Quản Lý Chi Tiêu Cá Nhân</span>
-            <div style={{ fontSize: '11px', marginTop: '2px', color: 'var(--emerald-400)' }}>
-              Dữ liệu lưu trên MongoDB Atlas • Bảo mật JWT • Device-scoped API Key
-            </div>
+            <span>© 2026</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <button
-              onClick={handleClearData}
-              className="btn btn-secondary btn-sm"
-              style={{ fontSize: '12px', color: '#fb7185' }}
-              title="Xóa toàn bộ giao dịch trong sổ"
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <a
+              href="https://www.facebook.com/huyhoang18012k5"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                color: 'var(--text-muted)',
+                textDecoration: 'none',
+                fontSize: '12.5px',
+                padding: '4px 8px',
+                borderRadius: '8px',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#1877F2';
+                e.currentTarget.style.background = 'rgba(24, 119, 242, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'var(--text-muted)';
+                e.currentTarget.style.background = 'transparent';
+              }}
+              title="Liên hệ Facebook: huyhoang18012k5"
             >
-              <Trash2 size={13} />
-              <span>Làm trống sổ chi tiêu</span>
-            </button>
-            <span>SpendWise AI © 2026 • MongoDB + Express</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+              </svg>
+              <span>Facebook</span>
+            </a>
           </div>
         </div>
       </footer>

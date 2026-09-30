@@ -25,7 +25,8 @@ export default function TransactionsView({
   onDeleteTransaction, 
   onUpdateTransaction,
   onNavigateToScanner, 
-  openManualModal 
+  openManualModal,
+  onClearData
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -119,7 +120,23 @@ export default function TransactionsView({
           <h1 style={{ fontSize: '26px' }}>Lịch Sử Chi Tiêu</h1>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {transactions.length > 0 && onClearData && (
+            <button 
+              onClick={onClearData} 
+              className="btn btn-secondary"
+              style={{
+                fontSize: '13px',
+                color: '#fb7185',
+                borderColor: 'rgba(244, 63, 94, 0.3)',
+                background: 'rgba(244, 63, 94, 0.06)'
+              }}
+              title="Xóa toàn bộ giao dịch trong sổ (yêu cầu mật khẩu)"
+            >
+              <Trash2 size={15} />
+              <span>Làm trống sổ chi tiêu</span>
+            </button>
+          )}
           <button onClick={exportToCSV} className="btn btn-secondary">
             <Download size={16} />
             <span>Xuất CSV</span>
