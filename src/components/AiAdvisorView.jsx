@@ -72,7 +72,7 @@ Bạn cần gợi ý hay tối ưu khoản nào hôm nay?`,
         transactions: (transactions || [])
           .filter(t => t.date && t.date.startsWith(stats.currentMonthPrefix || '2026-10'))
           .map(t => ({
-            id: t.id,
+            id: t._id || t.id,
             merchant: t.merchant,
             total: t.total,
             category: t.category,

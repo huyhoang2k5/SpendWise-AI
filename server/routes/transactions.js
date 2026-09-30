@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Transaction from '../models/Transaction.js';
 import { protect } from '../middleware/auth.js';
 
@@ -23,7 +24,13 @@ router.get('/', async (req, res) => {
       .sort({ date: -1, createdAt: -1 })
       .lean();
 
-    res.json({ success: true, transactions });
+    // Chuẩn hóa để mọi bản ghi đều có cả id và _id (dạng string)
+    const normalized = transactions.map(t => ({
+      ...t,
+      id: t._id.toString()
+    }));
+
+    res.json({ success: true, transactions: normalized });
   } catch (err) {
     console.error('Get transactions error:', err);
     res.status(500).json({ error: 'Lỗi khi tải danh sách giao dịch.' });
@@ -43,12 +50,15 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Thiếu thông tin bắt buộc: merchant, total, date.' });
     }
 
+    const validCategories = ['food', 'shopping', 'transport', 'education', 'living', 'other'];
+    const safeCategory = validCategories.includes(category) ? category : 'other';
+
     const tx = await Transaction.create({
       userId: req.user._id,
       merchant,
       total: Number(total),
       date,
-      category: category || 'other',
+      category: safeCategory,
       paymentMethod: paymentMethod || 'Không rõ',
       invoiceNumber: invoiceNumber || '',
       notes: notes || '',
@@ -58,7 +68,10 @@ router.post('/', async (req, res) => {
       source: source || 'manual'
     });
 
-    res.status(201).json({ success: true, transaction: tx });
+    const txObj = tx.toObject();
+    txObj.id = txObj._id.toString();
+
+    res.status(201).json({ success: true, transaction: txObj });
   } catch (err) {
     console.error('Add transaction error:', err);
     res.status(500).json({ error: 'Lỗi khi thêm giao dịch.' });
@@ -69,19 +82,34 @@ router.post('/', async (req, res) => {
 // Cập nhật giao dịch
 router.put('/:id', async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: 'ID giao dịch không hợp lệ.' });
+    }
+
     const tx = await Transaction.findOne({ _id: req.params.id, userId: req.user._id });
     if (!tx) {
       return res.status(404).json({ error: 'Không tìm thấy giao dịch.' });
     }
 
+    const validCategories = ['food', 'shopping', 'transport', 'education', 'living', 'other'];
     const allowed = ['merchant', 'total', 'date', 'category', 'paymentMethod',
                      'invoiceNumber', 'notes', 'items'];
     allowed.forEach(field => {
-      if (req.body[field] !== undefined) tx[field] = req.body[field];
+      if (req.body[field] !== undefined) {
+        if (field === 'category') {
+          tx[field] = validCategories.includes(req.body[field]) ? req.body[field] : 'other';
+        } else {
+          tx[field] = req.body[field];
+        }
+      }
     });
 
     await tx.save();
-    res.json({ success: true, transaction: tx });
+
+    const txObj = tx.toObject();
+    txObj.id = txObj._id.toString();
+
+    res.json({ success: true, transaction: txObj });
   } catch (err) {
     console.error('Update transaction error:', err);
     res.status(500).json({ error: 'Lỗi khi cập nhật giao dịch.' });
@@ -92,6 +120,10 @@ router.put('/:id', async (req, res) => {
 // Xóa giao dịch
 router.delete('/:id', async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: 'ID giao dịch không hợp lệ.' });
+    }
+
     const tx = await Transaction.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
     if (!tx) {
       return res.status(404).json({ error: 'Không tìm thấy giao dịch.' });

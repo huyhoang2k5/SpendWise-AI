@@ -19,7 +19,7 @@ export default function EditTransactionModal({ isOpen, onClose, transaction, onU
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onUpdateTransaction(formData.id, formData);
+    onUpdateTransaction(formData._id || formData.id, formData);
     onClose();
   };
 
@@ -55,7 +55,7 @@ export default function EditTransactionModal({ isOpen, onClose, transaction, onU
             </div>
             <div>
               <h3 style={{ fontSize: '17px', fontWeight: '700' }}>Chỉnh Sửa Giao Dịch / Hóa Đơn</h3>
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Mã: {formData.invoiceNumber || formData.id}</p>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Mã: {formData.invoiceNumber || formData._id || formData.id}</p>
             </div>
           </div>
           <button 

@@ -43,7 +43,16 @@ export default function App() {
   const loadTransactions = useCallback(async () => {
     try {
       const data = await transactionsApi.getAll();
-      setTransactions(data.transactions || []);
+      const raw = data.transactions || [];
+      const normalized = raw.map(t => {
+        const id = (t._id ? t._id.toString() : t.id) || '';
+        return {
+          ...t,
+          id,
+          _id: id
+        };
+      });
+      setTransactions(normalized);
     } catch (err) {
       console.error('Lỗi tải giao dịch:', err);
       addToast('Không thể tải danh sách giao dịch từ Cloud. Vui lòng kiểm tra kết nối.', 'error');
@@ -121,7 +130,9 @@ export default function App() {
     if (!currentUser) return;
     try {
       const { transaction } = await transactionsApi.add(newTx);
-      setTransactions(prev => [transaction, ...prev]);
+      const id = (transaction._id ? transaction._id.toString() : transaction.id) || '';
+      const normalized = { ...transaction, id, _id: id };
+      setTransactions(prev => [normalized, ...prev]);
       addToast(`Đã lưu hóa đơn "${newTx.merchant}" lên MongoDB!`);
       setCurrentTab('dashboard');
     } catch (err) {
@@ -131,9 +142,12 @@ export default function App() {
 
   const handleUpdateTransaction = async (id, updatedTx) => {
     if (!currentUser) return;
+    const targetId = id || updatedTx._id || updatedTx.id;
     try {
-      const { transaction } = await transactionsApi.update(id, updatedTx);
-      setTransactions(prev => prev.map(t => (t._id === id ? transaction : t)));
+      const { transaction } = await transactionsApi.update(targetId, updatedTx);
+      const resId = (transaction._id ? transaction._id.toString() : transaction.id) || targetId;
+      const normalized = { ...transaction, id: resId, _id: resId };
+      setTransactions(prev => prev.map(t => ((t._id || t.id) === targetId ? normalized : t)));
       addToast(`Đã cập nhật "${updatedTx.merchant}" trên MongoDB!`);
     } catch (err) {
       addToast(`Lỗi cập nhật: ${err.message}`, 'error');
@@ -142,9 +156,14 @@ export default function App() {
 
   const handleDeleteTransaction = async (id) => {
     if (!currentUser) return;
+    const targetId = id ? id.toString() : '';
+    if (!targetId) {
+      addToast('Không xác định được ID giao dịch để xóa.', 'error');
+      return;
+    }
     try {
-      await transactionsApi.delete(id);
-      setTransactions(prev => prev.filter(t => t._id !== id));
+      await transactionsApi.delete(targetId);
+      setTransactions(prev => prev.filter(t => (t._id !== targetId && t.id !== targetId)));
       addToast('Đã xóa giao dịch khỏi MongoDB.', 'info');
     } catch (err) {
       addToast(`Lỗi xóa giao dịch: ${err.message}`, 'error');

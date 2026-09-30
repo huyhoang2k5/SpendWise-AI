@@ -156,7 +156,7 @@ export default function MonthTransactionsModal({
     if (filteredTransactions.length === 0) return;
     const headers = ['Mã HĐ', 'Ngày', 'Thời gian', 'Đơn vị / Cửa hàng', 'Danh mục', 'Phương thức', 'Ghi chú', 'Tổng tiền (VND)'];
     const rows = filteredTransactions.map(t => [
-      `"${t.invoiceNumber || t.id}"`,
+      `"${t.invoiceNumber || t._id || t.id}"`,
       `"${t.date || ''}"`,
       `"${t.time || ''}"`,
       `"${(t.merchant || '').replace(/"/g, '""')}"`,
@@ -729,12 +729,13 @@ export default function MonthTransactionsModal({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {filteredTransactions.map((tx) => {
                 const categoryMeta = EXPENSE_CATEGORIES[tx.category] || EXPENSE_CATEGORIES.other;
-                const isExpanded = expandedId === tx.id;
+                const txId = tx._id || tx.id;
+                const isExpanded = expandedId === txId;
                 const itemsCount = tx.items ? tx.items.length : 0;
 
                 return (
                   <div
-                    key={tx.id}
+                    key={txId}
                     style={{
                       background: 'var(--bg-tertiary)',
                       border: '1px solid var(--border-subtle)',
@@ -745,7 +746,7 @@ export default function MonthTransactionsModal({
                   >
                     {/* Main Row */}
                     <div
-                      onClick={() => setExpandedId(isExpanded ? null : tx.id)}
+                      onClick={() => setExpandedId(isExpanded ? null : txId)}
                       style={{
                         padding: '16px 20px',
                         display: 'flex',
@@ -887,7 +888,7 @@ export default function MonthTransactionsModal({
                             Chi tiết các mặt hàng trong hóa đơn
                           </span>
                           <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                            Mã chứng từ: {tx.invoiceNumber || tx.id}
+                            Mã chứng từ: {tx.invoiceNumber || tx._id || tx.id}
                           </span>
                         </div>
 

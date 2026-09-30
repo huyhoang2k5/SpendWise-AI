@@ -1049,7 +1049,7 @@ export default function DashboardView({
                 const cat = EXPENSE_CATEGORIES[t.category] || EXPENSE_CATEGORIES.other;
                 return (
                   <tr 
-                    key={t.id}
+                    key={t._id || t.id}
                     style={{ 
                       borderBottom: '1px solid var(--border-subtle)',
                       transition: 'background 0.2s ease'

@@ -76,7 +76,7 @@ export default function TransactionsView({
   const exportToCSV = () => {
     const headers = ['Mã Giao Dịch', 'Cửa Hàng', 'Danh Mục', 'Ngày', 'Giờ', 'Số HĐ', 'Hình Thức', 'Tổng Tiền (VNĐ)', 'Ghi Chú'];
     const rows = filteredTransactions.map(t => [
-      t.id,
+      t._id || t.id,
       `"${t.merchant || ''}"`,
       EXPENSE_CATEGORIES[t.category]?.name || t.category,
       t.date,
@@ -254,11 +254,12 @@ export default function TransactionsView({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {filteredTransactions.map((tx) => {
             const cat = EXPENSE_CATEGORIES[tx.category] || EXPENSE_CATEGORIES.other;
-            const isExpanded = expandedId === tx.id;
+            const txId = tx._id || tx.id;
+            const isExpanded = expandedId === txId;
 
             return (
               <div 
-                key={tx.id} 
+                key={txId} 
                 className="card"
                 style={{
                   padding: '16px 20px',
@@ -336,7 +337,7 @@ export default function TransactionsView({
                     {/* Toggle Items */}
                     {tx.items?.length > 0 && (
                       <button
-                        onClick={() => toggleExpand(tx.id)}
+                        onClick={() => toggleExpand(txId)}
                         className="btn btn-secondary btn-sm"
                         style={{ padding: '6px 10px', fontSize: '12px' }}
                         title="Xem chi tiết món hàng"
@@ -361,7 +362,7 @@ export default function TransactionsView({
                     <button
                       onClick={() => {
                         if (window.confirm(`Bạn có chắc muốn xóa khoản chi "${tx.merchant}" (${analyticsService.formatCurrency(tx.total)})?`)) {
-                          onDeleteTransaction(tx.id);
+                          onDeleteTransaction(txId);
                         }
                       }}
                       className="btn btn-danger btn-sm"
