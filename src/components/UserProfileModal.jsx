@@ -51,8 +51,8 @@ export default function UserProfileModal({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('Sinh viên');
-  const [defaultBudget, setDefaultBudget] = useState(10000000);
-  const [password, setPassword] = useState('');
+  const [monthlyBudget, setMonthlyBudget] = useState(10000000);
+  const [newPassword, setNewPassword] = useState('');
   const [avatar, setAvatar] = useState('');
   const [isCustomPhoto, setIsCustomPhoto] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -68,8 +68,8 @@ export default function UserProfileModal({
       setName(currentUser.name || '');
       setEmail(currentUser.email || '');
       setRole(currentUser.role || 'Sinh viên');
-      setDefaultBudget(currentUser.defaultBudget || 10000000);
-      setPassword(currentUser.password || '123');
+      setMonthlyBudget(currentUser.monthlyBudget ?? currentUser.defaultBudget ?? 10000000);
+      setNewPassword('');
       setAvatar(currentUser.avatar || PRESET_AVATARS[0].url);
       setIsCustomPhoto(Boolean(currentUser.avatar && currentUser.avatar.startsWith('data:image')));
       setErrorMsg('');
@@ -134,7 +134,7 @@ export default function UserProfileModal({
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
 
@@ -158,20 +158,37 @@ export default function UserProfileModal({
       return;
     }
 
-    const res = onUpdateProfile({
+    const budgetNum = Number(monthlyBudget) || 10000000;
+    if (budgetNum <= 0) {
+      setErrorMsg('Ngân sách tháng dự kiến phải lớn hơn 0 VNĐ!');
+      return;
+    }
+
+    const payload = {
       username: username.trim().toLowerCase(),
       name: name.trim(),
       email: email ? email.trim().toLowerCase() : '',
       role: role.trim(),
-      defaultBudget: Number(defaultBudget) || 10000000,
-      password: password,
+      monthlyBudget: budgetNum,
+      defaultBudget: budgetNum,
       avatar: avatar
-    });
+    };
+
+    if (newPassword.trim()) {
+      if (newPassword.trim().length < 4) {
+        setErrorMsg('Mật khẩu mới phải có ít nhất 4 ký tự!');
+        return;
+      }
+      payload.password = newPassword.trim();
+    }
+
+    const res = await onUpdateProfile(payload);
 
     if (res && res.error) {
       setErrorMsg(res.error);
     } else {
       setIsSavedSuccess(true);
+      setSuccessNotice('Đã cập nhật hồ sơ & ngân sách thành công!');
       setTimeout(() => {
         setIsSavedSuccess(false);
         onClose();
@@ -571,10 +588,13 @@ export default function UserProfileModal({
             </div>
 
             {/* Password & Monthly Budget */}
-            <div className="grid-2col">
+            <div className="grid-2col" style={{ gap: '16px' }}>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
-                  Mật Khẩu Đăng Nhập
+                <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span>Mật Khẩu Đăng Nhập</span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '400' }}>
+                    (Bỏ trống nếu giữ nguyên)
+                  </span>
                 </label>
                 <div style={{ position: 'relative' }}>
                   <Lock size={16} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }} />
@@ -582,10 +602,10 @@ export default function UserProfileModal({
                     type={showPassword ? 'text' : 'password'}
                     className="input"
                     style={{ paddingLeft: '38px', paddingRight: '36px', width: '100%', fontFamily: 'var(--font-mono)' }}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Mật khẩu..."
-                    required
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="•••••••• (Bảo mật Bcrypt)"
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"
@@ -604,11 +624,17 @@ export default function UserProfileModal({
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', lineHeight: 1.3 }}>
+                  Mật khẩu được mã hóa an toàn trên MongoDB. Chỉ nhập vào ô này khi muốn đổi mật khẩu mới.
+                </div>
               </div>
 
               <div>
-                <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
-                  Ngân Sách Tháng Dự Kiến (VNĐ)
+                <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span>Ngân Sách Tháng Dự Kiến</span>
+                  <span style={{ fontSize: '11px', color: 'var(--emerald-400)', fontWeight: '700', fontFamily: 'var(--font-mono)' }}>
+                    {Number(monthlyBudget || 0).toLocaleString('vi-VN')} đ
+                  </span>
                 </label>
                 <div style={{ position: 'relative' }}>
                   <Wallet size={16} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }} />
@@ -616,11 +642,16 @@ export default function UserProfileModal({
                     type="number"
                     className="input"
                     style={{ paddingLeft: '38px', width: '100%', fontFamily: 'var(--font-mono)' }}
-                    value={defaultBudget}
-                    onChange={(e) => setDefaultBudget(e.target.value)}
+                    value={monthlyBudget}
+                    onChange={(e) => setMonthlyBudget(e.target.value)}
                     placeholder="10000000"
                     step="500000"
+                    min="500000"
+                    required
                   />
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', lineHeight: 1.3 }}>
+                  Hạn mức dùng để cảnh báo chi tiêu và tính tỷ lệ hoàn thành mục tiêu tài chính.
                 </div>
               </div>
             </div>
@@ -639,10 +670,10 @@ export default function UserProfileModal({
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Calendar size={14} />
-                <span>Ngày tạo tài khoản: <strong>{currentUser.joinedDate || '2026-09-01'}</strong></span>
+                <span>Ngày tham gia: <strong>{currentUser.createdAt ? new Date(currentUser.createdAt).toLocaleDateString('vi-VN') : (currentUser.joinedDate || '2026-09-01')}</strong></span>
               </div>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--emerald-400)' }}>
-                ID: {currentUser.id}
+                ID: {currentUser._id || currentUser.id}
               </span>
             </div>
           </div>

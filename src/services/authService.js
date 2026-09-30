@@ -97,6 +97,7 @@ export const authService = {
       avatar: avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
       description: 'Tài khoản người dùng cá nhân (Dữ liệu bảo mật riêng tư)',
       defaultBudget: Number(defaultBudget) || 10000000,
+      monthlyBudget: Number(defaultBudget) || 10000000,
       status: 'active',
       joinedDate: new Date().toISOString().split('T')[0]
     };
@@ -132,7 +133,8 @@ export const authService = {
       name: updatedFields.name !== undefined ? updatedFields.name.trim() : users[idx].name,
       email: updatedFields.email !== undefined ? updatedFields.email.trim().toLowerCase() : users[idx].email,
       role: updatedFields.role !== undefined ? updatedFields.role.trim() : users[idx].role,
-      defaultBudget: updatedFields.defaultBudget !== undefined ? Number(updatedFields.defaultBudget) : users[idx].defaultBudget,
+      defaultBudget: updatedFields.defaultBudget !== undefined ? Number(updatedFields.defaultBudget) : (updatedFields.monthlyBudget !== undefined ? Number(updatedFields.monthlyBudget) : users[idx].defaultBudget),
+      monthlyBudget: updatedFields.monthlyBudget !== undefined ? Number(updatedFields.monthlyBudget) : (updatedFields.defaultBudget !== undefined ? Number(updatedFields.defaultBudget) : users[idx].monthlyBudget || users[idx].defaultBudget),
       password: updatedFields.password !== undefined ? updatedFields.password : users[idx].password,
       avatar: updatedFields.avatar !== undefined ? updatedFields.avatar : users[idx].avatar
     };
