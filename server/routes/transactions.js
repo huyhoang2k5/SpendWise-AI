@@ -43,8 +43,8 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const {
-      merchant, total, date, category, paymentMethod,
-      invoiceNumber, notes, items, confidence, imageUrl, source
+      merchant, total, date, time, address, category, paymentMethod,
+      invoiceNumber, notes, items, vat, discount, confidence, imageUrl, source
     } = req.body;
 
     if (!merchant || total === undefined || !date) {
@@ -54,17 +54,35 @@ router.post('/', async (req, res) => {
     const validCategories = ['food', 'shopping', 'transport', 'education', 'living', 'other'];
     const safeCategory = validCategories.includes(category) ? category : 'other';
 
+    // Normalize confidence
+    let conf = Number(confidence) || 0;
+    if (conf > 1) conf = conf / 100;
+    conf = Math.min(1, Math.max(0, conf));
+
+    // Normalize items
+    const safeItems = Array.isArray(items) ? items.map(it => ({
+      name: String(it?.name || 'Món hàng').trim(),
+      quantity: Number(it?.quantity) || 1,
+      unitPrice: Number(it?.unitPrice) || 0,
+      total: Number(it?.total) || 0,
+      category: validCategories.includes(it?.category) ? it.category : safeCategory
+    })) : [];
+
     const tx = await Transaction.create({
       userId: req.user._id,
-      merchant,
-      total: Number(total),
-      date,
+      merchant: String(merchant).trim(),
+      total: Math.max(0, Number(total) || 0),
+      date: String(date).trim(),
+      time: time || '',
+      address: address || '',
       category: safeCategory,
       paymentMethod: paymentMethod || 'Không rõ',
       invoiceNumber: invoiceNumber || '',
       notes: notes || '',
-      items: items || [],
-      confidence: confidence || 0,
+      items: safeItems,
+      vat: Number(vat) || 0,
+      discount: Number(discount) || 0,
+      confidence: conf,
       imageUrl: imageUrl || '',
       source: source || 'manual'
     });
@@ -75,7 +93,7 @@ router.post('/', async (req, res) => {
     res.status(201).json({ success: true, transaction: txObj });
   } catch (err) {
     console.error('Add transaction error:', err);
-    res.status(500).json({ error: 'Lỗi khi thêm giao dịch.' });
+    res.status(500).json({ error: err.message || 'Lỗi khi thêm giao dịch.' });
   }
 });
 
@@ -93,12 +111,20 @@ router.put('/:id', async (req, res) => {
     }
 
     const validCategories = ['food', 'shopping', 'transport', 'education', 'living', 'other'];
-    const allowed = ['merchant', 'total', 'date', 'category', 'paymentMethod',
-                     'invoiceNumber', 'notes', 'items'];
+    const allowed = ['merchant', 'total', 'date', 'time', 'address', 'category', 'paymentMethod',
+                     'invoiceNumber', 'notes', 'items', 'vat', 'discount'];
     allowed.forEach(field => {
       if (req.body[field] !== undefined) {
         if (field === 'category') {
           tx[field] = validCategories.includes(req.body[field]) ? req.body[field] : 'other';
+        } else if (field === 'items' && Array.isArray(req.body.items)) {
+          tx.items = req.body.items.map(it => ({
+            name: String(it?.name || 'Món hàng').trim(),
+            quantity: Number(it?.quantity) || 1,
+            unitPrice: Number(it?.unitPrice) || 0,
+            total: Number(it?.total) || 0,
+            category: validCategories.includes(it?.category) ? it.category : 'other'
+          }));
         } else {
           tx[field] = req.body[field];
         }
@@ -113,7 +139,7 @@ router.put('/:id', async (req, res) => {
     res.json({ success: true, transaction: txObj });
   } catch (err) {
     console.error('Update transaction error:', err);
-    res.status(500).json({ error: 'Lỗi khi cập nhật giao dịch.' });
+    res.status(500).json({ error: err.message || 'Lỗi khi cập nhật giao dịch.' });
   }
 });
 

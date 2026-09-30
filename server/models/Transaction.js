@@ -4,7 +4,8 @@ const itemSchema = new mongoose.Schema({
   name: { type: String, default: '' },
   quantity: { type: Number, default: 1 },
   unitPrice: { type: Number, default: 0 },
-  total: { type: Number, default: 0 }
+  total: { type: Number, default: 0 },
+  category: { type: String, default: 'other' }
 }, { _id: false });
 
 const transactionSchema = new mongoose.Schema({
@@ -30,6 +31,14 @@ const transactionSchema = new mongoose.Schema({
     type: String,   // Lưu dạng 'YYYY-MM-DD' để dễ filter
     required: true
   },
+  time: {
+    type: String,
+    default: ''
+  },
+  address: {
+    type: String,
+    default: ''
+  },
   category: {
     type: String,
     enum: ['food', 'shopping', 'transport', 'education', 'living', 'other'],
@@ -54,12 +63,20 @@ const transactionSchema = new mongoose.Schema({
     default: []
   },
 
+  // ─── Thuế VAT & Chiết khấu ───────────────────────────────────────────
+  vat: {
+    type: Number,
+    default: 0
+  },
+  discount: {
+    type: Number,
+    default: 0
+  },
+
   // ─── Metadata từ AI ──────────────────────────────────────────────────
   confidence: {
     type: Number,
-    default: 0,
-    min: 0,
-    max: 1
+    default: 0
   },
   imageUrl: {
     type: String,   // Base64 ảnh hóa đơn (optional)
@@ -71,7 +88,6 @@ const transactionSchema = new mongoose.Schema({
   },
   source: {
     type: String,
-    enum: ['ai_scan', 'manual'],
     default: 'manual'
   }
 }, {
