@@ -240,12 +240,9 @@ export default function App() {
     // Bước 1: Xác thực mật khẩu tài khoản trực tiếp qua API auth trước!
     // Nếu sai mật khẩu, server auth sẽ ném lỗi 401 và chặn ngay lập tức.
     try {
-      await authApi.login({
-        username: currentUser.username,
-        password: password
-      });
-    } catch {
-      throw new Error('Mật khẩu tài khoản không chính xác. Hành động bị từ chối!');
+      await authApi.login(currentUser.username, password);
+    } catch (err) {
+      throw new Error(err.message || 'Mật khẩu tài khoản không chính xác. Hành động bị từ chối!');
     }
 
     // Bước 2: Khi và chỉ khi mật khẩu đã đúng 100%, mới thực thi lệnh xóa

@@ -54,10 +54,18 @@ export const authApi = {
   },
 
   /**
-   * Đăng nhập
+   * Đăng nhập (hỗ trợ cả dạng tham số (username, password) và dạng object ({ username, password }))
    * @returns {{ success, token, user }}
    */
-  login: async (username, password) => {
+  login: async (usernameOrObj, maybePassword) => {
+    let username, password;
+    if (typeof usernameOrObj === 'object' && usernameOrObj !== null) {
+      username = usernameOrObj.username;
+      password = usernameOrObj.password;
+    } else {
+      username = usernameOrObj;
+      password = maybePassword;
+    }
     const res = await fetch(`${BASE_URL}/auth/login`, {
       method: 'POST',
       headers: buildHeaders(false),
@@ -66,6 +74,19 @@ export const authApi = {
     const data = await handleResponse(res);
     if (data.token) localStorage.setItem('spendwise_token', data.token);
     return data;
+  },
+
+  /**
+   * Xác thực mật khẩu người dùng
+   * @returns {{ success, token, user }}
+   */
+  verifyPassword: async (username, password) => {
+    const res = await fetch(`${BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: buildHeaders(false),
+      body: JSON.stringify({ username, password })
+    });
+    return handleResponse(res);
   },
 
   /**
