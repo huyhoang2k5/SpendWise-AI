@@ -1,5 +1,6 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 import User from '../models/User.js';
 import { protect } from '../middleware/auth.js';
 
@@ -14,6 +15,11 @@ const generateToken = (userId) => {
 
 // ─── POST /api/auth/register ─────────────────────────────────────────────
 router.post('/register', async (req, res) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      error: 'Máy chủ đang kết nối lại với MongoDB Atlas. Vui lòng thử lại sau vài giây hoặc cập nhật MONGODB_URI chuẩn trên Railway.'
+    });
+  }
   try {
     const { username, password, name, email, role, roleCode, monthlyBudget, avatar } = req.body;
 
@@ -59,6 +65,11 @@ router.post('/register', async (req, res) => {
 
 // ─── POST /api/auth/login ────────────────────────────────────────────────
 router.post('/login', async (req, res) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      error: 'Máy chủ đang kết nối lại với MongoDB Atlas. Vui lòng thử lại sau vài giây hoặc cập nhật MONGODB_URI chuẩn trên Railway.'
+    });
+  }
   try {
     const { username, password } = req.body;
 
