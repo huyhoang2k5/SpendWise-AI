@@ -63,23 +63,24 @@ app.use((err, req, res, next) => {
 
 // ─── Connect MongoDB → Start Server ─────────────────────────────────────
 const startServer = async () => {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 SpendWise AI Server đang chạy tại port ${PORT} (0.0.0.0)`);
+    console.log(`📡 Health check: /api/health`);
+  });
+
   if (!process.env.MONGODB_URI || process.env.MONGODB_URI.includes('YOUR_USERNAME')) {
-    console.error('❌ MONGODB_URI chưa được cấu hình trong file server/.env!');
-    console.error('   Hãy điền MongoDB Atlas connection string vào biến MONGODB_URI.');
-    process.exit(1);
+    console.warn('⚠️ MONGODB_URI chưa được cấu hình. Các API Database sẽ tạm thời không khả dụng.');
+    return;
   }
 
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Đã kết nối MongoDB Atlas thành công!');
-
-    app.listen(PORT, () => {
-      console.log(`🚀 SpendWise AI Server đang chạy tại http://localhost:${PORT}`);
-      console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
+    await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 15000,
     });
+    console.log('✅ Đã kết nối MongoDB Atlas thành công!');
   } catch (err) {
-    console.error('❌ Lỗi kết nối MongoDB:', err.message);
-    process.exit(1);
+    console.error('❌ Lỗi kết nối MongoDB Atlas:', err.message);
+    console.error('👉 Gợi ý: Hãy kiểm tra mục Network Access trên MongoDB Atlas xem đã thêm IP 0.0.0.0/0 chưa.');
   }
 };
 
