@@ -417,12 +417,7 @@ export default function App() {
         </div>
       </main>
 
-      <footer style={{
-        borderTop: '1px solid var(--border-subtle)',
-        background: 'var(--surface-card)',
-        padding: '14px 0',
-        marginTop: 'auto'
-      }}>
+      <footer className="app-footer">
         <div className="container" style={{
           display: 'flex',
           alignItems: 'center',
@@ -445,25 +440,29 @@ export default function App() {
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '6px',
-                color: 'var(--text-muted)',
-                textDecoration: 'none',
+                gap: '7px',
+                padding: '6px 14px',
+                borderRadius: '20px',
+                background: '#1877F2',
+                color: '#ffffff',
+                fontWeight: '700',
                 fontSize: '12.5px',
-                padding: '4px 8px',
-                borderRadius: '8px',
+                textDecoration: 'none',
+                boxShadow: '0 2px 8px rgba(24, 119, 242, 0.45)',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
                 transition: 'all 0.2s ease'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = '#1877F2';
-                e.currentTarget.style.background = 'rgba(24, 119, 242, 0.1)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 14px rgba(24, 119, 242, 0.65)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'var(--text-muted)';
-                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(24, 119, 242, 0.45)';
               }}
-              title="Liên hệ Facebook: huyhoang18012k5"
+              title="Facebook: huyhoang18012k5"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffffff" style={{ flexShrink: 0 }}>
                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
               </svg>
               <span>Facebook</span>

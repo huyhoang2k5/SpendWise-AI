@@ -548,6 +548,13 @@ h1, h2, h3, h4, h5, h6 {
   display: none;
 }
 
+.app-footer {
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-card);
+  padding: 16px 0;
+  margin-top: auto;
+}
+
 @media (max-width: 820px) {
   /* Ẩn các chi tiết chữ trên header để không bị chật */
   .navbar-desktop-nav {
@@ -587,9 +594,23 @@ h1, h2, h3, h4, h5, h6 {
     justify-content: center !important;
   }
 
-  /* Tạo khoảng trống dưới cùng để nội dung trang không bị dock che */
+  /* Khoảng cách nội dung trang trên mobile trước footer */
   .main-content-area {
-    padding-bottom: 95px !important;
+    padding-bottom: 20px !important;
+  }
+
+  /* Đảm bảo footer trên mobile cách xa thanh dock, không bị che */
+  .app-footer {
+    padding-top: 18px !important;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 20px)) !important;
+  }
+
+  .app-footer .container {
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 10px !important;
+    text-align: center !important;
   }
 
   /* HIỆN THANH ĐIỀU HƯỚNG DƯỚI ĐÁY MÀN HÌNH CHUẨN APP MOBILE */
