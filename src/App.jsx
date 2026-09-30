@@ -131,11 +131,33 @@ export default function App() {
   const handleAddTransaction = async (newTx) => {
     if (!currentUser) return;
     try {
-      const { transaction } = await transactionsApi.add(newTx);
+      const safeSource = (newTx.source === 'manual') ? 'manual' : 'ai_scan';
+      const cleanTx = {
+        merchant: (newTx.merchant || 'Hóa đơn mới').trim(),
+        total: Math.max(0, Number(newTx.total) || 0),
+        date: newTx.date || new Date().toISOString().split('T')[0],
+        category: newTx.category || 'other',
+        paymentMethod: newTx.paymentMethod || 'Không rõ',
+        invoiceNumber: newTx.invoiceNumber || '',
+        notes: newTx.notes || '',
+        items: Array.isArray(newTx.items) ? newTx.items.map(it => ({
+          name: it.name || 'Món hàng',
+          quantity: Number(it.quantity) || 1,
+          unitPrice: Number(it.unitPrice) || 0,
+          total: Number(it.total) || 0
+        })) : [],
+        confidence: typeof newTx.confidence === 'number' 
+          ? (newTx.confidence > 1 ? newTx.confidence / 100 : newTx.confidence)
+          : 0.95,
+        imageUrl: newTx.imageUrl || '',
+        source: safeSource
+      };
+
+      const { transaction } = await transactionsApi.add(cleanTx);
       const id = (transaction._id ? transaction._id.toString() : transaction.id) || '';
       const normalized = { ...transaction, id, _id: id };
       setTransactions(prev => [normalized, ...prev]);
-      addToast(`Đã lưu hóa đơn "${newTx.merchant}" lên MongoDB!`);
+      addToast(`Đã lưu hóa đơn "${cleanTx.merchant}" lên MongoDB!`);
       setCurrentTab('dashboard');
     } catch (err) {
       addToast(`Lỗi lưu giao dịch: ${err.message}`, 'error');

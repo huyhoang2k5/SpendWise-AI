@@ -35,6 +35,7 @@ let lastDbError = null;
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
+    version: '2.1.0',
     message: 'SpendWise AI Server đang chạy',
     dbStatus: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     dbError: lastDbError,

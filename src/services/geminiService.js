@@ -181,7 +181,7 @@ Quy tắc kiểm tra:
         total: parsedTotal,
         confidence: Number(parsed.confidence) || 0.96,
         isSimulated: false,
-        source: 'gemini-api'
+        source: 'ai_scan'
       };
     } catch (err) {
       console.warn('Lỗi khi gọi Gemini API trực tiếp:', err);
@@ -222,7 +222,7 @@ Quy tắc kiểm tra:
     ],
     confidence: 0.92,
     isSimulated: true,
-    source: 'smart-local-ocr'
+    source: 'ai_scan'
   };
 }
 
