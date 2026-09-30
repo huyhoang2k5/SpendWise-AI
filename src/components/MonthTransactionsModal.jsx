@@ -22,11 +22,9 @@ import {
 import { EXPENSE_CATEGORIES } from '../constants/categories';
 import { analyticsService } from '../services/analyticsService';
 
-const RECENT_MONTHS = [
-  { key: '2026-08', label: 'Tháng 08/2026', shortLabel: 'T08/2026', tag: 'Tháng trước' },
-  { key: '2026-07', label: 'Tháng 07/2026', shortLabel: 'T07/2026', tag: '2 tháng trước' },
-  { key: '2026-06', label: 'Tháng 06/2026', shortLabel: 'T06/2026', tag: '3 tháng trước' }
-];
+const getFallbackRecentMonths = () => {
+  return analyticsService.getRollingRecentMonths(analyticsService.getCurrentMonthKey(), 3);
+};
 
 export default function MonthTransactionsModal({
   isOpen,
@@ -37,7 +35,7 @@ export default function MonthTransactionsModal({
   currentMonthTotal = 0,
   recentMonths = []
 }) {
-  const dynamicMonths = (recentMonths && recentMonths.length > 0) ? recentMonths : RECENT_MONTHS;
+  const dynamicMonths = (recentMonths && recentMonths.length > 0) ? recentMonths : getFallbackRecentMonths();
   const [activeMonthKey, setActiveMonthKey] = useState(monthPrefix || dynamicMonths[0]?.key);
   const [isMonthDropdownOpen, setIsMonthDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');

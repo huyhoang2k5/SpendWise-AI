@@ -67,13 +67,37 @@ export const analyticsService = {
    * If current month is 2026-09 -> returns [2026-08, 2026-07, 2026-06].
    * If moving to 2026-10 -> dynamically returns [2026-09, 2026-08, 2026-07], dropping 2026-06!
    */
-  getRollingRecentMonths: (currentMonthKey = '2026-09', count = 3) => {
+  // Get real-time current month key YYYY-MM
+  getCurrentMonthKey: () => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    return `${y}-${m}`;
+  },
+
+  getCurrentMonthDisplay: (monthKey) => {
+    const key = monthKey || analyticsService.getCurrentMonthKey();
+    const [y, m] = key.split('-');
+    return `${m}/${y}`;
+  },
+
+  getCurrentMonthLabel: (monthKey) => {
+    const key = monthKey || analyticsService.getCurrentMonthKey();
+    const [y, m] = key.split('-');
+    return `Tháng ${m}/${y}`;
+  },
+
+  /**
+   * Generates a dynamic rolling window of N months immediately prior to a given month.
+   */
+  getRollingRecentMonths: (currentMonthKey, count = 3) => {
+    const keyToUse = currentMonthKey || analyticsService.getCurrentMonthKey();
     let currentYear = 2026;
-    let currentMonth = 9;
-    if (currentMonthKey && currentMonthKey.includes('-')) {
-      const parts = currentMonthKey.split('-');
+    let currentMonth = 10;
+    if (keyToUse && keyToUse.includes('-')) {
+      const parts = keyToUse.split('-');
       currentYear = parseInt(parts[0], 10) || 2026;
-      currentMonth = parseInt(parts[1], 10) || 9;
+      currentMonth = parseInt(parts[1], 10) || 10;
     }
     
     const months = [];
@@ -97,19 +121,28 @@ export const analyticsService = {
   },
 
   calculateStats: (transactions = [], monthlyBudget = 12000000, categoryBudgets = {}) => {
-    // Dynamically detect current active month:
-    // Look at all transaction dates and take the latest month, default to 2026-09
+    // Real-time current month (e.g. 2026-10)
+    const realTimeMonthKey = analyticsService.getCurrentMonthKey();
+
     const allMonthsWithTx = Array.from(new Set(
       transactions
         .map(t => (t.date && t.date.length >= 7) ? t.date.substring(0, 7) : null)
         .filter(Boolean)
     )).sort().reverse();
 
-    const currentMonthPrefix = allMonthsWithTx[0] || '2026-09';
-    
+    // Active month is real-time month (or latest transaction month if user added in future)
+    const currentMonthPrefix = (allMonthsWithTx[0] && allMonthsWithTx[0] > realTimeMonthKey)
+      ? allMonthsWithTx[0]
+      : realTimeMonthKey;
+
+    const [curYear, curMonth] = currentMonthPrefix.split('-');
+    const currentMonthDisplay = `${curMonth}/${curYear}`;
+    const currentMonthLabel = `Tháng ${curMonth}/${curYear}`;
+
     // Dynamic Rolling Window: generate 3 months prior to current active month
     const rollingTemplates = analyticsService.getRollingRecentMonths(currentMonthPrefix, 3);
-    const prevMonthPrefix = rollingTemplates[0]?.key || '2026-08';
+    const prevMonthPrefix = rollingTemplates[0]?.key;
+    const prevMonthLabel = rollingTemplates[0]?.label || 'Tháng trước';
 
     const currentMonthTxs = transactions.filter(t => t.date && t.date.startsWith(currentMonthPrefix));
     // If no transactions in currentMonthPrefix, fallback to non-historical
@@ -240,7 +273,13 @@ export const analyticsService = {
       prevMonthCount,
       momDiff,
       momPercent,
-      // 3 Most Recent Months (Month 8, 7, 6 / 2026)
+      // Current & Previous Month Metadata
+      currentMonthPrefix,
+      currentMonthDisplay,
+      currentMonthLabel,
+      prevMonthPrefix,
+      prevMonthLabel,
+      // 3 Most Recent Months
       recentMonths
     };
   }

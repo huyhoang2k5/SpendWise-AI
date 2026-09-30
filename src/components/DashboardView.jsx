@@ -32,7 +32,7 @@ export default function DashboardView({
   const [activeCategoryKey, setActiveCategoryKey] = useState(null);
   const [timeHorizon, setTimeHorizon] = useState('day'); // 'day' | 'week' | 'month'
   const [isPrevMonthModalOpen, setIsPrevMonthModalOpen] = useState(false);
-  const [selectedMonthPrefix, setSelectedMonthPrefix] = useState('2026-08');
+  const [selectedMonthPrefix, setSelectedMonthPrefix] = useState(() => stats.recentMonths?.[0]?.key || '2026-09');
   const [isCardDropdownOpen, setIsCardDropdownOpen] = useState(false);
   const cardDropdownRef = useRef(null);
 
@@ -85,16 +85,21 @@ export default function DashboardView({
     ].join(' ');
   }
 
-  // Calculate weekly breakdown for 3.b (ngày/tuần/tháng)
+  // Dynamic weekly breakdown for current month (1-7, 8-14, 15-21, 22-end)
+  const curMonthParts = (stats.currentMonthPrefix || '2026-10').split('-');
+  const currentMonthNum = parseInt(curMonthParts[1], 10);
+  const currentYearNum = parseInt(curMonthParts[0], 10);
+  const daysInCurMonth = new Date(currentYearNum, currentMonthNum, 0).getDate();
+
   const weeklyData = [
-    { label: 'Tuần 1 (01-07/9)', amount: 0 },
-    { label: 'Tuần 2 (08-14/9)', amount: 0 },
-    { label: 'Tuần 3 (15-21/9)', amount: 0 },
-    { label: 'Tuần 4 (22-30/9)', amount: 0 }
+    { label: `Tuần 1 (01-07/${currentMonthNum})`, amount: 0 },
+    { label: `Tuần 2 (08-14/${currentMonthNum})`, amount: 0 },
+    { label: `Tuần 3 (15-21/${currentMonthNum})`, amount: 0 },
+    { label: `Tuần 4 (22-${daysInCurMonth}/${currentMonthNum})`, amount: 0 }
   ];
 
   transactions.forEach(t => {
-    if (!t.date) return;
+    if (!t.date || !t.date.startsWith(stats.currentMonthPrefix)) return;
     const day = parseInt(t.date.split('-')[2], 10);
     const amt = Number(t.total) || 0;
     if (day <= 7) weeklyData[0].amount += amt;
@@ -125,7 +130,7 @@ export default function DashboardView({
               color: '#34d399',
               fontWeight: '700'
             }}>
-              Tháng 09/2026
+              {stats.currentMonthLabel}
             </span>
             <button
               onClick={() => setIsPrevMonthModalOpen(true)}
@@ -154,7 +159,7 @@ export default function DashboardView({
               title="Nhấn vào để xem toàn bộ hóa đơn & giao dịch tháng trước (08/2026)"
             >
               <Calendar size={12} />
-              <span>Tháng trước: {analyticsService.formatCurrency(stats.prevMonthTotal)}</span>
+              <span>{stats.prevMonthLabel || 'Tháng trước'}: {analyticsService.formatCurrency(stats.prevMonthTotal)}</span>
               <ChevronRight size={12} />
             </button>
           </div>
@@ -253,7 +258,7 @@ export default function DashboardView({
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
             <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>
-              TỔNG CHI TIÊU THÁNG (09/2026)
+              TỔNG CHI TIÊU THÁNG ({stats.currentMonthDisplay})
             </span>
             <div style={{
               width: '36px',
@@ -281,9 +286,9 @@ export default function DashboardView({
           {/* 1 Single Button Dropdown: Chọn xem hóa đơn 3 tháng gần nhất */}
           {(() => {
             const currentSelectedMonthObj = (stats.recentMonths || []).find(m => m.key === selectedMonthPrefix) || stats.recentMonths?.[0] || {
-              key: '2026-08',
-              label: 'Tháng 08/2026',
-              shortLabel: 'T08/2026',
+              key: stats.prevMonthPrefix || '2026-09',
+              label: stats.prevMonthLabel || 'Tháng 09/2026',
+              shortLabel: stats.recentMonths?.[0]?.shortLabel || 'T09/2026',
               tag: 'Tháng trước',
               total: stats.prevMonthTotal,
               count: stats.prevMonthCount

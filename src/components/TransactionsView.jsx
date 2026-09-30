@@ -175,17 +175,29 @@ export default function TransactionsView({
           {/* Month Filter */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Calendar size={16} color="var(--text-muted)" />
-            <select
-              className="select"
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-            >
-              <option value="all">Tất cả thời gian</option>
-              <option value="2026-09">Tháng 09/2026 (Hiện tại)</option>
-              <option value="2026-08">Tháng 08/2026 (Tháng trước)</option>
-              <option value="2026-07">Tháng 07/2026 (2 tháng trước)</option>
-              <option value="2026-06">Tháng 06/2026 (3 tháng trước)</option>
-            </select>
+            {(() => {
+              const curKey = analyticsService.getCurrentMonthKey();
+              const rolling = analyticsService.getRollingRecentMonths(curKey, 4);
+              const dynamicOptions = [
+                { key: curKey, label: `${analyticsService.getCurrentMonthLabel(curKey)} (Hiện tại)` },
+                ...rolling.map(r => ({ key: r.key, label: `${r.label} (${r.tag})` }))
+              ];
+
+              return (
+                <select
+                  className="select"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                >
+                  <option value="all">Tất cả thời gian</option>
+                  {dynamicOptions.map(opt => (
+                    <option key={opt.key} value={opt.key}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              );
+            })()}
           </div>
 
           {/* Sort By */}
