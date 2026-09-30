@@ -18,6 +18,9 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState('dashboard');
   const [isLoading, setIsLoading] = useState(true);     // Đang khởi tạo
   const [serverOnline, setServerOnline] = useState(true); // Trạng thái server
+  const [isOfflineMode, setIsOfflineMode] = useState(() => {
+    return localStorage.getItem('spendwise_offline_mode') === 'true';
+  });
 
   // Data state
   const [transactions, setTransactions] = useState([]);
@@ -39,32 +42,92 @@ export default function App() {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   };
 
-  // ─── Tải transactions từ MongoDB ────────────────────────────────────────
-  const loadTransactions = useCallback(async () => {
+  // ─── Tải transactions từ MongoDB / LocalStorage ──────────────────────────
+  const loadTransactions = useCallback(async (offline = isOfflineMode) => {
+    if (offline) {
+      const localTxs = storageService.getTransactions('offline_user');
+      setTransactions(localTxs || []);
+      return;
+    }
     try {
       const data = await transactionsApi.getAll();
       setTransactions(data.transactions || []);
     } catch (err) {
       console.error('Lỗi tải giao dịch:', err);
-      addToast('Không thể tải danh sách giao dịch. Kiểm tra kết nối server.', 'error');
+      addToast('Không thể tải danh sách giao dịch từ Cloud. Bạn có thể dùng chế độ Offline.', 'error');
     }
-  }, []);
+  }, [isOfflineMode]);
+
+  // ─── Kích hoạt chế độ Offline ───────────────────────────────────────────
+  const enableOfflineMode = () => {
+    localStorage.setItem('spendwise_offline_mode', 'true');
+    setIsOfflineMode(true);
+    setServerOnline(true);
+    const offlineUser = {
+      _id: 'offline_user',
+      id: 'offline_user',
+      username: 'offline_user',
+      name: 'Người dùng Thiết bị',
+      role: 'Sinh viên'
+    };
+    setCurrentUser(offlineUser);
+    const savedBudget = storageService.getMonthlyBudget('offline_user');
+    setMonthlyBudget(savedBudget || 10000000);
+    const savedCatBudgets = storageService.getCategoryBudgets('offline_user');
+    setCategoryBudgets(savedCatBudgets || {});
+    loadTransactions(true);
+    addToast('Đã chuyển sang chế độ Ngoại tuyến (Lưu dữ liệu trên máy).', 'info');
+  };
+
+  const switchBackToCloudMode = async () => {
+    localStorage.removeItem('spendwise_offline_mode');
+    setIsOfflineMode(false);
+    setIsLoading(true);
+    const online = await checkServerHealth();
+    setServerOnline(online);
+    if (!online) {
+      setIsLoading(false);
+      addToast('Máy chủ Cloud vẫn chưa phản hồi. Vui lòng thử lại sau.', 'error');
+      return;
+    }
+    setCurrentUser(null);
+    setTransactions([]);
+    setIsLoading(false);
+    addToast('Đã kết nối lại Cloud. Vui lòng đăng nhập.', 'success');
+  };
 
   // ─── Khởi tạo app khi mount ─────────────────────────────────────────────
   useEffect(() => {
     const init = async () => {
       setIsLoading(true);
 
-      // Kiểm tra server online
-      const online = await checkServerHealth();
-      setServerOnline(online);
-
-      // Lấy settings local (API key, theme — luôn ở localStorage theo thiết kế)
+      // Lấy settings local (API key, theme)
       const savedKey = storageService.getApiKey();
       const savedTheme = storageService.getTheme();
       setApiKey(savedKey);
       setTheme(savedTheme);
       document.documentElement.setAttribute('data-theme', savedTheme);
+
+      // Nếu đang bật chế độ offline
+      if (localStorage.getItem('spendwise_offline_mode') === 'true') {
+        const offlineUser = {
+          _id: 'offline_user',
+          id: 'offline_user',
+          username: 'offline_user',
+          name: 'Người dùng Thiết bị',
+          role: 'Sinh viên'
+        };
+        setCurrentUser(offlineUser);
+        setMonthlyBudget(storageService.getMonthlyBudget('offline_user') || 10000000);
+        setCategoryBudgets(storageService.getCategoryBudgets('offline_user') || {});
+        loadTransactions(true);
+        setIsLoading(false);
+        return;
+      }
+
+      // Kiểm tra server online
+      const online = await checkServerHealth();
+      setServerOnline(online);
 
       if (!online) {
         setIsLoading(false);
@@ -78,9 +141,8 @@ export default function App() {
           setCurrentUser(user);
           setMonthlyBudget(user.monthlyBudget || 10000000);
           setCategoryBudgets(user.categoryBudgets || {});
-          await loadTransactions();
+          await loadTransactions(false);
         } catch {
-          // Token hết hạn hoặc không hợp lệ
           authApi.logout();
         }
       }
@@ -117,9 +179,16 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', next);
   };
 
-  // ─── CRUD giao dịch (gọi API → cập nhật state) ─────────────────────────
+  // ─── CRUD giao dịch (Cloud API hoặc Offline LocalStorage) ──────────────
   const handleAddTransaction = async (newTx) => {
     if (!currentUser) return;
+    if (isOfflineMode) {
+      const saved = storageService.saveTransaction('offline_user', newTx);
+      setTransactions(prev => [saved, ...prev]);
+      addToast(`Đã lưu hóa đơn "${newTx.merchant}" vào máy!`);
+      setCurrentTab('dashboard');
+      return;
+    }
     try {
       const { transaction } = await transactionsApi.add(newTx);
       setTransactions(prev => [transaction, ...prev]);
@@ -132,6 +201,12 @@ export default function App() {
 
   const handleUpdateTransaction = async (id, updatedTx) => {
     if (!currentUser) return;
+    if (isOfflineMode) {
+      const updated = storageService.updateTransaction('offline_user', id, updatedTx);
+      setTransactions(prev => prev.map(t => (t.id === id || t._id === id ? updated : t)));
+      addToast(`Đã cập nhật "${updatedTx.merchant}"!`);
+      return;
+    }
     try {
       const { transaction } = await transactionsApi.update(id, updatedTx);
       setTransactions(prev => prev.map(t => (t._id === id ? transaction : t)));
@@ -143,6 +218,12 @@ export default function App() {
 
   const handleDeleteTransaction = async (id) => {
     if (!currentUser) return;
+    if (isOfflineMode) {
+      storageService.deleteTransaction('offline_user', id);
+      setTransactions(prev => prev.filter(t => t.id !== id && t._id !== id));
+      addToast('Đã xóa giao dịch.', 'info');
+      return;
+    }
     try {
       await transactionsApi.delete(id);
       setTransactions(prev => prev.filter(t => t._id !== id));
@@ -152,9 +233,15 @@ export default function App() {
     }
   };
 
-  // ─── Ngân sách (lưu vào user profile trên MongoDB) ──────────────────────
+  // ─── Ngân sách (lưu vào MongoDB hoặc LocalStorage) ──────────────────────
   const handleUpdateMonthlyBudget = async (amount) => {
     if (!currentUser) return;
+    if (isOfflineMode) {
+      storageService.saveMonthlyBudget('offline_user', amount);
+      setMonthlyBudget(amount);
+      addToast('Đã cập nhật hạn mức ngân sách tháng!');
+      return;
+    }
     try {
       await authApi.updateProfile({ monthlyBudget: amount });
       setMonthlyBudget(amount);
@@ -166,6 +253,12 @@ export default function App() {
 
   const handleUpdateCategoryBudgets = async (budgets) => {
     if (!currentUser) return;
+    if (isOfflineMode) {
+      storageService.saveCategoryBudgets('offline_user', budgets);
+      setCategoryBudgets(budgets);
+      addToast('Đã cập nhật ngân sách danh mục!');
+      return;
+    }
     try {
       await authApi.updateProfile({ categoryBudgets: budgets });
       setCategoryBudgets(budgets);
@@ -229,7 +322,8 @@ export default function App() {
   }
 
   // ─── Server offline warning ────────────────────────────────────────────
-  if (!serverOnline) {
+  if (!serverOnline && !isOfflineMode) {
+    const rawUrl = import.meta.env.VITE_API_URL || 'localhost:5000';
     return (
       <div style={{
         minHeight: '100vh',
@@ -244,20 +338,28 @@ export default function App() {
       }}>
         <WifiOff size={48} color="#f43f5e" />
         <div>
-          <h2 style={{ color: 'var(--text-primary)', marginBottom: '8px' }}>Server chưa chạy</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '14px', maxWidth: '400px' }}>
-            Không thể kết nối đến backend server tại <code style={{ color: '#34d399' }}>localhost:5000</code>.
+          <h2 style={{ color: 'var(--text-primary)', marginBottom: '8px' }}>Máy chủ Cloud chưa phản hồi</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '14px', maxWidth: '440px', lineHeight: '1.6' }}>
+            Không thể kết nối đến máy chủ tại <code style={{ color: '#34d399', wordBreak: 'break-all' }}>{rawUrl}</code>.
           </p>
-          <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '12px' }}>
-            Mở terminal và chạy: <code style={{ color: '#fbbf24', background: 'var(--bg-tertiary)', padding: '2px 8px', borderRadius: '4px' }}>cd server && npm run dev</code>
+          <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '10px' }}>
+            Bạn có thể thử lại hoặc bấm <strong>Dùng Chế độ Ngoại tuyến</strong> để vào app trải nghiệm ngay mà không cần chờ server!
           </p>
         </div>
-        <button
-          className="btn btn-primary"
-          onClick={() => window.location.reload()}
-        >
-          Thử lại kết nối
-        </button>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <button
+            className="btn btn-secondary"
+            onClick={() => window.location.reload()}
+          >
+            Thử lại kết nối
+          </button>
+          <button
+            className="btn btn-primary"
+            onClick={enableOfflineMode}
+          >
+            ⚡ Dùng Chế độ Ngoại tuyến (Vào app ngay)
+          </button>
+        </div>
       </div>
     );
   }
