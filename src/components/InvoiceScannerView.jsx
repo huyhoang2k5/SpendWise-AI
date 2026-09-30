@@ -271,56 +271,18 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
 
   return (
     <div style={{ padding: '36px 0 60px' }}>
-      {/* Title Header - Desktop Version (Giữ nguyên cho Laptop) */}
-      <div className="desktop-only-scanner" style={{ textAlign: 'center', marginBottom: '32px' }}>
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '6px 16px',
-          borderRadius: '9999px',
-          background: 'rgba(16, 185, 129, 0.12)',
-          border: '1px solid rgba(16, 185, 129, 0.25)',
-          color: '#34d399',
-          fontSize: '13px',
-          fontWeight: '700',
-          marginBottom: '14px'
-        }}>
-          <Sparkles size={15} />
-          <span>Quét Hóa Đơn AI</span>
-        </div>
-        <h1 style={{ fontSize: '30px', marginBottom: '8px' }}>
-          Quét Hóa Đơn Tự Động
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', maxWidth: '600px', margin: '0 auto', fontSize: '14px' }}>
-          Tải ảnh hoặc chụp hóa đơn để AI tự động nhận diện và lưu chi tiêu.
-        </p>
-      </div>
-
-      {/* Title Header - Mobile Version (Tối ưu cho Điện Thoại) */}
-      <div className="mobile-only-scanner" style={{ marginBottom: '18px' }}>
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '6px',
-          padding: '4px 12px',
-          borderRadius: '9999px',
-          background: 'rgba(16, 185, 129, 0.12)',
-          border: '1px solid rgba(16, 185, 129, 0.25)',
-          color: '#34d399',
-          fontSize: '11.5px',
-          fontWeight: '700',
-          marginBottom: '8px'
-        }}>
-          <Sparkles size={13} />
-          <span>Quét Hóa Đơn AI</span>
-        </div>
-        <h1 style={{ fontSize: '22px', fontWeight: '800', marginBottom: '4px' }}>
+      {/* Title Header - Desktop Version */}
+      <div className="desktop-only-scanner" style={{ textAlign: 'center', marginBottom: '28px' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: '800' }}>
           Quét Hóa Đơn AI
         </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>
-          Chụp hoặc tải ảnh hóa đơn để AI tự động ghi nhận chi tiêu.
-        </p>
+      </div>
+
+      {/* Title Header - Mobile Version */}
+      <div className="mobile-only-scanner" style={{ marginBottom: '16px' }}>
+        <h1 style={{ fontSize: '22px', fontWeight: '800' }}>
+          Quét Hóa Đơn AI
+        </h1>
       </div>
 
       {/* Main Scanner Section */}
@@ -353,7 +315,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
                   style={{ fontSize: '13px', flexShrink: 0 }}
                 >
                   <RefreshCw size={14} />
-                  <span>Thử quét lại</span>
+                  <span>Quét lại</span>
                 </button>
               )}
             </div>
@@ -376,7 +338,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
             style={{ display: 'none' }}
           />
 
-          {/* MOBILE SCANNER HERO CARD (Chuyên dụng cho Điện Thoại) */}
+          {/* MOBILE SCANNER HERO CARD */}
           <div className="mobile-only-scanner" style={{ marginBottom: '24px' }}>
             <div style={{
               background: 'linear-gradient(145deg, rgba(16, 185, 129, 0.14), rgba(6, 182, 212, 0.08))',
@@ -410,12 +372,9 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
                 <Camera size={38} strokeWidth={2.2} />
               </div>
 
-              <h2 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                Chụp Hóa Đơn Bằng Camera
+              <h2 style={{ fontSize: '17px', fontWeight: '800', marginBottom: '16px', color: 'var(--text-primary)' }}>
+                Chụp hoặc chọn hóa đơn
               </h2>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '18px', lineHeight: 1.45 }}>
-                Chụp hóa đơn để AI tự động nhận diện chi tiêu
-              </p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <button
@@ -434,7 +393,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
                   }}
                 >
                   <Camera size={18} />
-                  <span>Chụp ảnh hóa đơn</span>
+                  <span>Chụp ảnh</span>
                 </button>
 
                 <button
@@ -452,13 +411,13 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
                   }}
                 >
                   <ImageIcon size={17} color="var(--emerald-400)" />
-                  <span>Chọn từ thư viện ảnh</span>
+                  <span>Chọn từ thư viện</span>
                 </button>
               </div>
             </div>
           </div>
 
-          {/* DESKTOP UPLOAD DROPZONE (Giữ nguyên 100% cho Laptop) */}
+          {/* DESKTOP UPLOAD DROPZONE */}
           <div className="desktop-only-scanner">
           <div
             onClick={() => fileInputRef.current?.click()}
@@ -471,7 +430,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
               background: 'var(--surface-card)',
               backdropFilter: 'blur(12px)',
               transition: 'all 0.3s ease',
-              marginBottom: '32px'
+              marginBottom: '28px'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = 'var(--emerald-500)';
@@ -504,10 +463,10 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
               <UploadCloud size={32} />
             </div>
             <h3 style={{ fontSize: '18px', marginBottom: '6px' }}>
-              Kéo thả hoặc Bấm để tải ảnh hóa đơn
+              Kéo thả hoặc tải ảnh hóa đơn
             </h3>
             <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '16px' }}>
-              Hỗ trợ định dạng JPG, PNG, WEBP, HEIC từ điện thoại hoặc máy tính
+              Hỗ trợ JPG, PNG, WEBP
             </p>
             <div style={{ display: 'inline-flex', gap: '10px' }}>
               <button 
@@ -516,7 +475,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
                 onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
               >
                 <Camera size={16} />
-                <span>Chọn ảnh từ thiết bị</span>
+                <span>Chọn ảnh</span>
               </button>
             </div>
           </div>
@@ -527,17 +486,16 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
             background: 'var(--bg-secondary)',
             border: '1px solid var(--border-subtle)',
             borderRadius: '14px',
-            padding: '14px 18px',
+            padding: '12px 16px',
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
+            gap: '10px',
             color: 'var(--text-secondary)',
-            fontSize: '12.5px',
-            lineHeight: 1.5
+            fontSize: '12.5px'
           }}>
-            <Sparkles size={18} color="var(--emerald-400)" style={{ flexShrink: 0 }} />
+            <Sparkles size={16} color="var(--emerald-400)" style={{ flexShrink: 0 }} />
             <div>
-              <strong style={{ color: 'var(--text-primary)' }}>Mẹo quét nhanh:</strong> Chụp hóa đơn phẳng phiu, đủ sáng. Hỗ trợ mọi hóa đơn giấy, siêu thị, nhà hàng và ảnh chụp màn hình chuyển khoản VietQR, VNPay, MoMo.
+              Hỗ trợ hóa đơn giấy, siêu thị, nhà hàng và ảnh chuyển khoản ngân hàng.
             </div>
           </div>
         </div>
@@ -630,7 +588,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <CheckCircle2 color="#34d399" size={20} />
                 <span style={{ fontSize: '14px', fontWeight: '700', color: '#34d399' }}>
-                  AI đã quét xong hóa đơn!
+                  Kết quả quét
                 </span>
                 <span style={{
                   fontSize: '11px',
@@ -640,7 +598,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
                   color: '#34d399',
                   fontFamily: 'var(--font-mono)'
                 }}>
-                  Độ tin cậy: {Math.round((parsedData.confidence || 0.95) * 100)}%
+                  {Math.round((parsedData.confidence || 0.95) * 100)}% chính xác
                 </span>
               </div>
 
@@ -653,7 +611,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
                     style={{ fontSize: '12px', padding: '6px 10px' }}
                   >
                     <ImageIcon size={14} />
-                    <span>{showReceiptImage ? 'Ẩn ảnh gốc' : 'Xem ảnh gốc'}</span>
+                    <span>{showReceiptImage ? 'Ẩn ảnh' : 'Xem ảnh'}</span>
                   </button>
                 )}
                 <button
@@ -708,7 +666,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
             }}>
               <div>
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>
-                  Tổng tiền thanh toán
+                  Tổng tiền
                 </div>
                 <div style={{
                   fontSize: '28px',
@@ -751,7 +709,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
               }}
             >
               <CheckCircle2 size={19} />
-              <span>Xác Nhận & Lưu Vào Sổ Chi Tiêu</span>
+              <span>Lưu chi tiêu</span>
             </button>
           </div>
 
@@ -781,7 +739,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
                 }}
               >
                 <Store size={15} />
-                <span>Thông tin chung</span>
+                <span>Thông tin</span>
               </button>
               <button
                 type="button"
@@ -801,7 +759,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
                 }}
               >
                 <Layers size={15} />
-                <span>Chi tiết món & Thuế ({parsedData.items?.length || 0})</span>
+                <span>Chi tiết món ({parsedData.items?.length || 0})</span>
               </button>
             </div>
 
@@ -810,7 +768,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
               <div>
                 <div style={{ marginBottom: '14px' }}>
                   <label className="label" style={{ fontSize: '12px', marginBottom: '6px' }}>
-                    Tên cửa hàng / Đơn vị
+                    Cửa hàng
                   </label>
                   <input
                     type="text"
@@ -824,7 +782,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
                 {/* 1-tap category grid */}
                 <div style={{ marginBottom: '14px' }}>
                   <label className="label" style={{ fontSize: '12px', marginBottom: '6px' }}>
-                    Danh mục chi tiêu
+                    Danh mục
                   </label>
                   <div style={{
                     display: 'grid',
@@ -867,7 +825,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
-                      Ngày giao dịch
+                      Ngày
                     </label>
                     <input
                       type="date"
@@ -879,7 +837,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
-                      Hình thức thanh toán
+                      Thanh toán
                     </label>
                     <input
                       type="text"
@@ -893,7 +851,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
 
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
-                    Số hóa đơn / Mã tham chiếu
+                    Mã hóa đơn
                   </label>
                   <input
                     type="text"
@@ -920,7 +878,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
                     className="btn btn-secondary btn-sm"
                     style={{ padding: '4px 10px', fontSize: '12px' }}
                   >
-                    <Plus size={13} /> Thêm món mới
+                    <Plus size={13} /> Thêm món
                   </button>
                 </div>
 

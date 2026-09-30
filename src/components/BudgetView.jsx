@@ -65,41 +65,38 @@ export default function BudgetView({
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: '16px',
-        marginBottom: '28px'
+        marginBottom: '24px'
       }}>
         <div>
-          <h1 style={{ fontSize: '26px', marginBottom: '4px' }}>Quản Lý Ngân Sách</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-            Thiết lập và theo dõi hạn mức chi tiêu trong tháng
-          </p>
+          <h1 style={{ fontSize: '26px' }}>Ngân Sách</h1>
         </div>
 
         <div style={{ display: 'flex', gap: '10px' }}>
           <button
             onClick={apply503020Rule}
             className="btn btn-secondary"
-            title="Chia ngân sách theo quy tắc 50/30/20"
+            title="Quy tắc 50/30/20"
           >
             <Sparkles size={16} color="var(--emerald-400)" />
-            <span>Quy tắc 50/30/20</span>
+            <span>50/30/20</span>
           </button>
 
           {editingBudget ? (
             <button onClick={handleSaveBudgets} className="btn btn-primary">
               <Save size={16} />
-              <span>Lưu Thiết Lập</span>
+              <span>Lưu</span>
             </button>
           ) : (
             <button onClick={() => setEditingBudget(true)} className="btn btn-primary">
               <Edit3 size={16} />
-              <span>Chỉnh sửa ngân sách</span>
+              <span>Chỉnh sửa</span>
             </button>
           )}
         </div>
       </div>
 
       {/* Main Monthly Budget Overview Card */}
-      <div className="card" style={{ padding: '28px', marginBottom: '32px' }}>
+      <div className="card" style={{ padding: '24px', marginBottom: '28px' }}>
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
@@ -115,13 +112,13 @@ export default function BudgetView({
                 border: stats.isOverBudget ? '1px solid rgba(244, 63, 94, 0.4)' : '1px solid rgba(16, 185, 129, 0.4)',
                 padding: '4px 10px'
               }}>
-                {stats.isOverBudget ? '🚨 ĐÃ VƯỢT NGÂN SÁCH' : stats.percentSpent > 80 ? '⚠️ CẬN KỀ HẠN MỨC' : '✓ TIẾN ĐỘ AN TOÀN'}
+                {stats.isOverBudget ? '🚨 VƯỢT NGÂN SÁCH' : stats.percentSpent > 80 ? '⚠️ CẬN HẠN MỨC' : '✓ AN TOÀN'}
               </span>
-              <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Tháng 09/2026</span>
+              <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{stats.currentMonthDisplay || 'Tháng này'}</span>
             </div>
 
             <div style={{ marginBottom: '16px' }}>
-              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Hạn mức chi tiêu tổng:</span>
+              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Hạn mức:</span>
               {editingBudget ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
                   <input
@@ -142,13 +139,13 @@ export default function BudgetView({
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', fontSize: '14px' }}>
               <div>
-                <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>Thực tế đã chi:</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>Đã chi:</span>
                 <div style={{ fontSize: '18px', fontWeight: '700', fontFamily: 'var(--font-mono)', color: stats.isOverBudget ? '#fb7185' : 'var(--text-primary)' }}>
                   {analyticsService.formatCurrency(stats.totalSpent)}
                 </div>
               </div>
               <div>
-                <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>Khả dụng còn lại:</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>Còn lại:</span>
                 <div style={{ fontSize: '18px', fontWeight: '700', fontFamily: 'var(--font-mono)', color: 'var(--emerald-400)' }}>
                   {analyticsService.formatCurrency(stats.remainingBudget)}
                 </div>
@@ -164,7 +161,7 @@ export default function BudgetView({
             border: '1px solid var(--border-subtle)'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontSize: '14px', fontWeight: '600' }}>Tỷ lệ sử dụng ngân sách</span>
+              <span style={{ fontSize: '14px', fontWeight: '600' }}>Đã dùng</span>
               <span style={{
                 fontSize: '20px',
                 fontWeight: '800',
@@ -198,18 +195,18 @@ export default function BudgetView({
               }} />
             </div>
 
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+            <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
               {stats.isOverBudget ? (
                 <span style={{ color: '#fb7185', fontWeight: '600' }}>
-                  ⚠️ Bạn đã tiêu vượt {analyticsService.formatCurrency(stats.totalSpent - monthlyBudget)}. Hãy cắt giảm các chi phí mua sắm và giải trí trong các ngày còn lại!
+                  ⚠️ Đã tiêu vượt {analyticsService.formatCurrency(stats.totalSpent - monthlyBudget)}
                 </span>
               ) : stats.percentSpent > 80 ? (
                 <span style={{ color: '#fbbf24', fontWeight: '600' }}>
-                  ⚠️ Bạn đã dùng hết {Math.round(stats.percentSpent)}% ngân sách tháng. Tốc độ chi tiêu đang hơi nhanh so với trung bình!
+                  ⚠️ Đã dùng {Math.round(stats.percentSpent)}% ngân sách
                 </span>
               ) : (
                 <span style={{ color: '#34d399', fontWeight: '600' }}>
-                  ✓ Bạn đang kiểm soát ngân sách rất kỷ luật. Dòng tiền tháng này ở trạng thái lý tưởng!
+                  ✓ Đang trong hạn mức an toàn
                 </span>
               )}
             </p>
@@ -219,12 +216,9 @@ export default function BudgetView({
 
       {/* Category Budgets Grid */}
       <div>
-        <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '4px' }}>
-          Ngân Sách Theo Từng Danh Mục
+        <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>
+          Theo danh mục
         </h3>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '20px' }}>
-          Theo dõi sát sao từng khoản chi để tránh việc bị hụt tiền vào các nhóm ăn uống hoặc mua sắm
-        </p>
 
         <div style={{
           display: 'grid',
@@ -264,7 +258,7 @@ export default function BudgetView({
                     <h4 style={{ fontSize: '15px', fontWeight: '700' }}>{cat.name}</h4>
                   </div>
                   <span className={`badge ${cat.badgeClass}`}>
-                    {isOver ? 'VƯỢT HẠN MỨC' : isNear ? 'CẢNH BÁO' : 'AN TOÀN'}
+                    {isOver ? 'Vượt' : isNear ? 'Cảnh báo' : 'Tốt'}
                   </span>
                 </div>
 
@@ -318,7 +312,7 @@ export default function BudgetView({
 
                 {/* Status line */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-muted)' }}>
-                  <span>{Math.round(percent)}% đã sử dụng</span>
+                  <span>{Math.round(percent)}%</span>
                   <span style={{ color: isOver ? '#fb7185' : 'var(--emerald-400)', fontWeight: '600' }}>
                     {isOver 
                       ? `Vượt ${analyticsService.formatCurrency(cat.amount - currentCatBudget)}`

@@ -115,19 +115,6 @@ export default function Navbar({
               }}>
                 SpendWise AI
               </span>
-              <span className="desktop-only-badge" style={{
-                fontSize: '9.5px',
-                fontWeight: '700',
-                padding: '1px 5px',
-                borderRadius: '4px',
-                background: 'rgba(16, 185, 129, 0.15)',
-                color: '#34d399',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-                letterSpacing: '0.4px',
-                whiteSpace: 'nowrap'
-              }}>
-                PRO
-              </span>
             </div>
           </div>
 
@@ -194,10 +181,10 @@ export default function Navbar({
                 alignItems: 'center',
                 gap: '5px'
               }}
-              title="Thêm khoản chi thủ công"
+              title="Thêm khoản chi"
             >
               <Plus size={15} color="#34d399" />
-              <span className="desktop-only-text">Thêm chi tiêu</span>
+              <span className="desktop-only-text">Thêm</span>
             </button>
 
             {/* API Key Modal Button */}

@@ -238,9 +238,6 @@ export default function MonthTransactionsModal({
                   {activeMonthConfig.tag}
                 </span>
               </div>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                Danh sách hóa đơn trong {activeMonthLabel}
-              </p>
             </div>
           </div>
 
@@ -251,7 +248,7 @@ export default function MonthTransactionsModal({
               title={`Xuất file CSV danh sách hóa đơn ${activeMonthLabel}`}
             >
               <Download size={15} />
-              <span>Xuất CSV</span>
+              <span>CSV</span>
             </button>
             <button
               onClick={onClose}

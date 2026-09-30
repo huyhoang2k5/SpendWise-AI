@@ -116,10 +116,7 @@ export default function TransactionsView({
         marginBottom: '24px'
       }}>
         <div>
-          <h1 style={{ fontSize: '26px', marginBottom: '4px' }}>Lịch Sử Chi Tiêu</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-            Quản lý, tìm kiếm và xuất dữ liệu các khoản chi tiêu
-          </p>
+          <h1 style={{ fontSize: '26px' }}>Lịch Sử Chi Tiêu</h1>
         </div>
 
         <div style={{ display: 'flex', gap: '10px' }}>
@@ -129,7 +126,7 @@ export default function TransactionsView({
           </button>
           <button onClick={onNavigateToScanner} className="btn btn-primary">
             <Plus size={16} />
-            <span>Quét Hóa Đơn</span>
+            <span>Quét hóa đơn</span>
           </button>
         </div>
       </div>
@@ -147,7 +144,7 @@ export default function TransactionsView({
             <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input
               type="text"
-              placeholder="Tìm theo quán, sản phẩm, mã HĐ..."
+              placeholder="Tìm kiếm..."
               className="input"
               style={{ paddingLeft: '36px' }}
               value={searchTerm}
@@ -163,7 +160,7 @@ export default function TransactionsView({
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
             >
-              <option value="all">Tất cả danh mục ({transactions.length})</option>
+              <option value="all">Tất cả ({transactions.length})</option>
               {Object.entries(EXPENSE_CATEGORIES).map(([key, cat]) => (
                 <option key={key} value={key}>
                   {cat.name}
@@ -208,10 +205,10 @@ export default function TransactionsView({
               value={selectedSort}
               onChange={(e) => setSelectedSort(e.target.value)}
             >
-              <option value="newest">Ngày: Mới nhất trước</option>
-              <option value="oldest">Ngày: Cũ nhất trước</option>
-              <option value="highest">Số tiền: Cao nhất trước</option>
-              <option value="lowest">Số tiền: Thấp nhất trước</option>
+              <option value="newest">Mới nhất</option>
+              <option value="oldest">Cũ nhất</option>
+              <option value="highest">Tiền cao nhất</option>
+              <option value="lowest">Tiền thấp nhất</option>
             </select>
           </div>
         </div>
@@ -227,10 +224,10 @@ export default function TransactionsView({
           fontSize: '13px'
         }}>
           <span style={{ color: 'var(--text-muted)' }}>
-            Đang hiển thị <strong>{filteredTransactions.length}</strong> / {transactions.length} giao dịch
+            <strong>{filteredTransactions.length}</strong> / {transactions.length} giao dịch
           </span>
           <span style={{ color: 'var(--text-primary)', fontWeight: '700' }}>
-            Tổng lọc: <span style={{ color: 'var(--emerald-400)', fontFamily: 'var(--font-mono)' }}>{analyticsService.formatCurrency(filteredTotal)}</span>
+            Tổng: <span style={{ color: 'var(--emerald-400)', fontFamily: 'var(--font-mono)' }}>{analyticsService.formatCurrency(filteredTotal)}</span>
           </span>
         </div>
       </div>
@@ -239,10 +236,7 @@ export default function TransactionsView({
       {filteredTransactions.length === 0 ? (
         <div className="card" style={{ padding: '60px 20px', textAlign: 'center' }}>
           <FileText size={48} color="var(--text-muted)" style={{ margin: '0 auto 16px' }} />
-          <h3 style={{ fontSize: '18px', marginBottom: '8px' }}>Không tìm thấy giao dịch nào phù hợp</h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px' }}>
-            Thử thay đổi từ khóa tìm kiếm hoặc lọc theo danh mục khác.
-          </p>
+          <h3 style={{ fontSize: '18px', marginBottom: '16px' }}>Không có giao dịch</h3>
           <button
             onClick={() => { setSearchTerm(''); setSelectedCategory('all'); }}
             className="btn btn-secondary btn-sm"

@@ -113,29 +113,10 @@ Bạn cần gợi ý hay tối ưu khoản nào hôm nay?`,
   return (
     <div style={{ padding: '28px 0 60px' }}>
       {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '6px 16px',
-          borderRadius: '9999px',
-          background: 'rgba(99, 102, 241, 0.12)',
-          border: '1px solid rgba(99, 102, 241, 0.25)',
-          color: '#a78bfa',
-          fontSize: '13px',
-          fontWeight: '700',
-          marginBottom: '14px'
-        }}>
-          <Bot size={16} />
-          <span>Cố Vấn Tài Chính AI</span>
-        </div>
-        <h1 style={{ fontSize: '28px', marginBottom: '8px' }}>
-          Cố Vấn Chi Tiêu AI
+      <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+        <h1 style={{ fontSize: '28px' }}>
+          Trợ Lý Tài Chính AI
         </h1>
-        <p style={{ color: 'var(--text-secondary)', maxWidth: '600px', margin: '0 auto', fontSize: '14px' }}>
-          Phân tích thói quen chi tiêu, dự báo dòng tiền và gợi ý cách tiết kiệm phù hợp cho bạn.
-        </p>
       </div>
 
       {/* AI Insights & Forecasting Cards */}
@@ -143,7 +124,7 @@ Bạn cần gợi ý hay tối ưu khoản nào hôm nay?`,
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
         gap: '20px',
-        marginBottom: '32px'
+        marginBottom: '28px'
       }}>
         {/* Card 1: Spending Forecast */}
         <div className="card" style={{ padding: '22px' }}>
@@ -161,14 +142,14 @@ Bạn cần gợi ý hay tối ưu khoản nào hôm nay?`,
               <TrendingUp size={20} />
             </div>
             <div>
-              <h4 style={{ fontSize: '15px', fontWeight: '700' }}>Dự Báo Chi Tiêu</h4>
+              <h4 style={{ fontSize: '15px', fontWeight: '700' }}>Dự báo tháng</h4>
             </div>
           </div>
           <div style={{ fontSize: '24px', fontWeight: '800', fontFamily: 'var(--font-mono)', color: 'var(--emerald-400)', marginBottom: '8px' }}>
             ~ {analyticsService.formatCurrency(stats.projectedMonthEnd)}
           </div>
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-            Chi tiêu trung bình {analyticsService.formatCurrency(stats.dailyAverage)}/ngày, dự kiến cả tháng hết khoảng <strong>{analyticsService.formatCurrency(stats.projectedMonthEnd)}</strong>.
+            Chi tiêu trung bình {analyticsService.formatCurrency(stats.dailyAverage)}/ngày, dự kiến cả tháng khoảng <strong>{analyticsService.formatCurrency(stats.projectedMonthEnd)}</strong>.
           </p>
         </div>
 
@@ -188,7 +169,7 @@ Bạn cần gợi ý hay tối ưu khoản nào hôm nay?`,
               <AlertTriangle size={20} />
             </div>
             <div>
-              <h4 style={{ fontSize: '15px', fontWeight: '700' }}>Phát Hiện Bất Thường</h4>
+              <h4 style={{ fontSize: '15px', fontWeight: '700' }}>Bất thường</h4>
             </div>
           </div>
           <div style={{ fontSize: '15px', fontWeight: '700', marginBottom: '6px', color: '#fbbf24' }}>
@@ -196,7 +177,7 @@ Bạn cần gợi ý hay tối ưu khoản nào hôm nay?`,
           </div>
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
             {stats.peakDay 
-              ? `Ngày ${stats.peakDay.displayDate} có khoản chi ${analyticsService.formatCurrency(stats.peakDay.amount)} cao hơn bình thường. Bạn nên chú ý cân đối.`
+              ? `Ngày ${stats.peakDay.displayDate} có khoản chi ${analyticsService.formatCurrency(stats.peakDay.amount)} cao hơn bình thường.`
               : 'Chi tiêu các ngày đều ở mức ổn định, không có khoản đột biến.'}
           </p>
         </div>
@@ -217,7 +198,7 @@ Bạn cần gợi ý hay tối ưu khoản nào hôm nay?`,
               <Lightbulb size={20} />
             </div>
             <div>
-              <h4 style={{ fontSize: '15px', fontWeight: '700' }}>Gợi Ý Tiết Kiệm</h4>
+              <h4 style={{ fontSize: '15px', fontWeight: '700' }}>Gợi ý tiết kiệm</h4>
             </div>
           </div>
           <div style={{ fontSize: '15px', fontWeight: '700', marginBottom: '6px', color: 'var(--text-primary)' }}>

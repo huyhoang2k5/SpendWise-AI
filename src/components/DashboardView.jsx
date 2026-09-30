@@ -163,9 +163,6 @@ export default function DashboardView({
               <ChevronRight size={12} />
             </button>
           </div>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-            Tổng quan chi tiêu và ngân sách của bạn
-          </p>
         </div>
 
         <div style={{ display: 'flex', gap: '10px' }}>
@@ -174,14 +171,14 @@ export default function DashboardView({
             className="btn btn-primary"
           >
             <ScanLine size={17} />
-            <span>Quét Hóa Đơn</span>
+            <span>Quét hóa đơn</span>
           </button>
           <button
             onClick={openManualModal}
             className="btn btn-secondary"
           >
             <Plus size={17} />
-            <span>Thêm thủ công</span>
+            <span>+ Thêm</span>
           </button>
         </div>
       </div>
@@ -191,19 +188,19 @@ export default function DashboardView({
         background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(99, 102, 241, 0.12))',
         border: '1px solid rgba(16, 185, 129, 0.25)',
         borderRadius: '16px',
-        padding: '18px 24px',
-        marginBottom: '28px',
+        padding: '16px 20px',
+        marginBottom: '24px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
-        gap: '16px'
+        gap: '14px'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <div style={{
-            width: '54px',
-            height: '54px',
-            borderRadius: '14px',
+            width: '48px',
+            height: '48px',
+            borderRadius: '12px',
             background: 'linear-gradient(135deg, #10b981, #059669)',
             display: 'flex',
             flexDirection: 'column',
@@ -213,20 +210,20 @@ export default function DashboardView({
             fontWeight: '800',
             boxShadow: '0 4px 15px rgba(16, 185, 129, 0.35)'
           }}>
-            <span style={{ fontSize: '18px', lineHeight: 1 }}>{stats.healthScore}</span>
-            <span style={{ fontSize: '9px', opacity: 0.85 }}>ĐIỂM</span>
+            <span style={{ fontSize: '17px', lineHeight: 1 }}>{stats.healthScore}</span>
+            <span style={{ fontSize: '8.5px', opacity: 0.85 }}>ĐIỂM</span>
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontWeight: '700', fontSize: '15px' }}>
-                Sức khỏe tài chính: {stats.healthScore >= 80 ? 'Rất tốt' : stats.healthScore >= 60 ? 'Cần chú ý' : 'Cảnh báo quá chi'}
+              <span style={{ fontWeight: '700', fontSize: '14.5px' }}>
+                Sức khỏe tài chính: {stats.healthScore >= 80 ? 'Tốt' : stats.healthScore >= 60 ? 'Cần chú ý' : 'Cảnh báo'}
               </span>
-              <Sparkles size={16} color="#34d399" />
+              <Sparkles size={15} color="#34d399" />
             </div>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '2px' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '12.5px', marginTop: '2px' }}>
               {stats.isOverBudget 
-                ? '⚠️ Bạn đã vượt ngân sách tháng này. Hãy kiểm soát lại các khoản chi.'
-                : 'Chi tiêu đang nằm trong hạn mức an toàn.'}
+                ? '⚠️ Vượt ngân sách tháng này' 
+                : 'Chi tiêu trong hạn mức an toàn'}
             </p>
           </div>
         </div>
@@ -235,8 +232,8 @@ export default function DashboardView({
           onClick={() => onNavigateToTab('advisor')}
           className="btn btn-outline btn-sm"
         >
-          <span>Xem gợi ý AI</span>
-          <ChevronRight size={15} />
+          <span>Gợi ý AI</span>
+          <ChevronRight size={14} />
         </button>
       </div>
 
@@ -258,7 +255,7 @@ export default function DashboardView({
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
             <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>
-              TỔNG CHI TIÊU ({stats.currentMonthDisplay})
+              TỔNG CHI ({stats.currentMonthDisplay})
             </span>
             <div style={{
               width: '36px',
@@ -499,7 +496,7 @@ export default function DashboardView({
         <div className="card" style={{ padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
             <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>
-              NGÂN SÁCH CÒN LẠI
+              CÒN LẠI
             </span>
             <div style={{
               width: '36px',
@@ -547,7 +544,7 @@ export default function DashboardView({
         <div className="card" style={{ padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
             <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>
-              TRUNG BÌNH MỖI NGÀY
+              TRUNG BÌNH / NGÀY
             </span>
             <div style={{
               width: '36px',
@@ -574,7 +571,7 @@ export default function DashboardView({
         <div className="card" style={{ padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
             <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>
-              NHÓM CHI CAO NHẤT
+              CHI NHIỀU NHẤT
             </span>
             <div style={{
               width: '36px',
@@ -611,12 +608,9 @@ export default function DashboardView({
       }}>
         {/* Left Chart: Interactive Donut Chart */}
         <div className="card" style={{ padding: '24px' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '4px' }}>
-            Phân Bổ Chi Tiêu Theo Danh Mục
+          <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px' }}>
+            Theo danh mục
           </h3>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '20px' }}>
-            Tỷ lệ phân bổ theo nhóm chi tiêu
-          </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={{ position: 'relative', width: '220px', height: '220px', marginBottom: '20px' }}>
@@ -714,11 +708,8 @@ export default function DashboardView({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '10px' }}>
               <div>
                 <h3 style={{ fontSize: '16px', fontWeight: '700' }}>
-                  Biểu Đồ Chi Tiêu
+                  Xu hướng chi tiêu
                 </h3>
-                <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                  Biến động chi tiêu theo thời gian
-                </p>
               </div>
 
               {/* Time Horizon Switcher */}
@@ -742,7 +733,7 @@ export default function DashboardView({
                     fontWeight: timeHorizon === 'day' ? '700' : '500'
                   }}
                 >
-                  Theo Ngày
+                  Ngày
                 </button>
                 <button
                   onClick={() => setTimeHorizon('week')}
@@ -757,7 +748,7 @@ export default function DashboardView({
                     fontWeight: timeHorizon === 'week' ? '700' : '500'
                   }}
                 >
-                  Theo Tuần
+                  Tuần
                 </button>
                 <button
                   onClick={() => setTimeHorizon('month')}
@@ -772,7 +763,7 @@ export default function DashboardView({
                     fontWeight: timeHorizon === 'month' ? '700' : '500'
                   }}
                 >
-                  Theo Tháng
+                  Tháng
                 </button>
               </div>
             </div>
@@ -1019,16 +1010,13 @@ export default function DashboardView({
       <div className="card" style={{ padding: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
           <div>
-            <h3 style={{ fontSize: '17px', fontWeight: '700' }}>Hóa Đơn & Giao Dịch Gần Đây</h3>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-              Các khoản chi được quét và trích xuất tự động bằng AI
-            </p>
+            <h3 style={{ fontSize: '17px', fontWeight: '700' }}>Gần đây</h3>
           </div>
           <button
             onClick={() => onNavigateToTab('transactions')}
             className="btn btn-secondary btn-sm"
           >
-            <span>Xem tất cả ({transactions.length})</span>
+            <span>Tất cả ({transactions.length})</span>
             <ChevronRight size={14} />
           </button>
         </div>
@@ -1037,10 +1025,10 @@ export default function DashboardView({
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
               <tr style={{ textAlign: 'left', color: 'var(--text-muted)', borderBottom: '1px solid var(--border-subtle)' }}>
-                <th style={{ padding: '10px 14px' }}>Cửa hàng / Đơn vị</th>
+                <th style={{ padding: '10px 14px' }}>Cửa hàng</th>
                 <th style={{ padding: '10px 14px' }}>Danh mục</th>
-                <th style={{ padding: '10px 14px' }}>Ngày mua</th>
-                <th style={{ padding: '10px 14px' }}>Mã HĐ</th>
+                <th style={{ padding: '10px 14px' }}>Thời gian</th>
+                <th style={{ padding: '10px 14px' }}>Mã</th>
                 <th style={{ padding: '10px 14px', textAlign: 'right' }}>Số tiền</th>
               </tr>
             </thead>
