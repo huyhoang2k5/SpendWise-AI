@@ -6,9 +6,9 @@ import { categorizeItemOrMerchant } from '../constants/categories.js';
  * to eliminate browser CORS and ISP connection drops.
  */
 function createGenAIClient(apiKey) {
-  const isBrowser = typeof window !== 'undefined' && window.location;
-  // If in browser development environment, route through Vite proxy to eliminate CORS/browser fetch failures
-  const baseUrl = (isBrowser && window.location.origin) 
+  // Chỉ route qua proxy Vite (/api-gemini) khi đang chạy môi trường phát triển cục bộ (dev)
+  const isDev = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV;
+  const baseUrl = (isDev && typeof window !== 'undefined' && window.location?.origin) 
     ? `${window.location.origin}/api-gemini` 
     : undefined;
 

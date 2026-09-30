@@ -6,7 +6,8 @@
 
 // Dùng biến env VITE_API_URL khi deploy production (Railway URL)
 // Khi dev local: dùng '/api' (Vite proxy → localhost:5000)
-const BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const rawApiUrl = import.meta.env.VITE_API_URL || '/api';
+const BASE_URL = rawApiUrl.endsWith('/api') ? rawApiUrl : `${rawApiUrl.replace(/\/+$/, '')}/api`;
 
 
 // ─── Helper: lấy token từ localStorage ──────────────────────────────────
@@ -181,10 +182,11 @@ export const transactionsApi = {
 // ════════════════════════════════════════════════════════════════════════════
 export const checkServerHealth = async () => {
   try {
-    const res = await fetch('/api/health', { signal: AbortSignal.timeout(3000) });
+    const res = await fetch(`${BASE_URL}/health`, { signal: AbortSignal.timeout(5000) });
     return res.ok;
   } catch {
     return false;
   }
 };
+
 
