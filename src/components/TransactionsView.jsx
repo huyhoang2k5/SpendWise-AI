@@ -121,7 +121,7 @@ export default function TransactionsView({
         </div>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-          {transactions.length > 0 && onClearData && (
+          {onClearData && (
             <button 
               onClick={onClearData} 
               className="btn btn-secondary"
