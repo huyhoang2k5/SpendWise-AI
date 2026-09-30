@@ -29,12 +29,16 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
 
+let lastDbError = null;
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     message: 'SpendWise AI Server đang chạy',
     dbStatus: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    dbError: lastDbError,
+    hasMongoUri: Boolean(process.env.MONGODB_URI),
     timestamp: new Date().toISOString()
   });
 });
@@ -78,7 +82,9 @@ const startServer = async () => {
       serverSelectionTimeoutMS: 15000,
     });
     console.log('✅ Đã kết nối MongoDB Atlas thành công!');
+    lastDbError = null;
   } catch (err) {
+    lastDbError = err.message;
     console.error('❌ Lỗi kết nối MongoDB Atlas:', err.message);
     console.error('👉 Gợi ý: Hãy kiểm tra mục Network Access trên MongoDB Atlas xem đã thêm IP 0.0.0.0/0 chưa.');
   }
