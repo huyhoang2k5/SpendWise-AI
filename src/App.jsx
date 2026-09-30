@@ -9,6 +9,7 @@ import LoginScreen from './components/LoginScreen';
 import ApiKeyModal from './components/ApiKeyModal';
 import ManualExpenseModal from './components/ManualExpenseModal';
 import UserProfileModal from './components/UserProfileModal';
+import ClearDataModal from './components/ClearDataModal';
 import { storageService } from './services/storageService';
 import { authApi, transactionsApi, checkServerHealth } from './services/apiService';
 import { CheckCircle2, AlertCircle, Trash2, WifiOff, Loader2 } from 'lucide-react';
@@ -30,6 +31,7 @@ export default function App() {
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
 
   // ─── Toast helper ───────────────────────────────────────────────────────
@@ -200,17 +202,21 @@ export default function App() {
     addToast(key ? 'Đã kích hoạt Gemini API Key!' : 'Đã xóa API Key.');
   };
 
-  // ─── Xóa toàn bộ dữ liệu ────────────────────────────────────────────────
-  const handleClearData = async () => {
+  // ─── Xóa toàn bộ dữ liệu (yêu cầu xác thực mật khẩu qua Modal) ─────────
+  const handleClearData = () => {
     if (!currentUser) return;
-    if (!window.confirm(`Xóa toàn bộ giao dịch của [${currentUser.name}] trên MongoDB?\nHành động này KHÔNG THỂ hoàn tác!`)) return;
-    try {
-      await transactionsApi.deleteAll();
-      setTransactions([]);
-      addToast('Đã xóa sạch sổ chi tiêu. Bắt đầu ghi nhận dữ liệu thực tế!');
-    } catch (err) {
-      addToast(`Lỗi xóa dữ liệu: ${err.message}`, 'error');
+    if (transactions.length === 0) {
+      addToast('Sổ chi tiêu hiện tại đang trống, không có giao dịch nào để xóa.', 'info');
+      return;
     }
+    setIsClearModalOpen(true);
+  };
+
+  const handleConfirmClear = async (password) => {
+    if (!currentUser) return;
+    const result = await transactionsApi.deleteAll(password);
+    setTransactions([]);
+    addToast(result.message || 'Đã làm trống sổ chi tiêu thành công!', 'info');
   };
 
   // ─── Cập nhật hồ sơ cá nhân ─────────────────────────────────────────────
@@ -416,6 +422,13 @@ export default function App() {
         isOpen={isManualModalOpen}
         onClose={() => setIsManualModalOpen(false)}
         onAddTransaction={handleAddTransaction}
+      />
+      <ClearDataModal
+        isOpen={isClearModalOpen}
+        onClose={() => setIsClearModalOpen(false)}
+        onConfirm={handleConfirmClear}
+        transactionCount={transactions.length}
+        userName={currentUser?.name || currentUser?.username}
       />
 
       <div className="toast-container">

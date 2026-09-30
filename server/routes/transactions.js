@@ -1,6 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import Transaction from '../models/Transaction.js';
+import User from '../models/User.js';
 import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -135,11 +136,30 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// ─── DELETE /api/transactions (xóa tất cả của user) ─────────────────────
+// ─── DELETE /api/transactions (xóa tất cả của user - yêu cầu mật khẩu) ───
 router.delete('/', async (req, res) => {
   try {
-    await Transaction.deleteMany({ userId: req.user._id });
-    res.json({ success: true, message: 'Đã xóa toàn bộ giao dịch.' });
+    const { password } = req.body || {};
+    if (!password) {
+      return res.status(400).json({ error: 'Vui lòng nhập mật khẩu tài khoản để xác nhận làm trống sổ.' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: 'Không tìm thấy tài khoản người dùng.' });
+    }
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Mật khẩu tài khoản không chính xác.' });
+    }
+
+    const result = await Transaction.deleteMany({ userId: req.user._id });
+    res.json({ 
+      success: true, 
+      message: `Đã xóa toàn bộ ${result.deletedCount || 0} giao dịch khỏi sổ chi tiêu.`,
+      deletedCount: result.deletedCount 
+    });
   } catch (err) {
     console.error('Clear transactions error:', err);
     res.status(500).json({ error: 'Lỗi khi xóa dữ liệu.' });

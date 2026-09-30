@@ -166,12 +166,14 @@ export const transactionsApi = {
   },
 
   /**
-   * Xóa toàn bộ giao dịch của user
+   * Xóa toàn bộ giao dịch của user (yêu cầu mật khẩu xác nhận)
+   * @param {string} password
    */
-  deleteAll: async () => {
+  deleteAll: async (password) => {
     const res = await fetch(`${BASE_URL}/transactions`, {
       method: 'DELETE',
-      headers: buildHeaders()
+      headers: buildHeaders(),
+      body: JSON.stringify({ password })
     });
     return handleResponse(res);
   }
