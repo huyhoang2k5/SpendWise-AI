@@ -18,12 +18,27 @@ import {
   FileCheck,
   Image as ImageIcon,
   X,
-  SwitchCamera
+  SwitchCamera,
+  Utensils,
+  ShoppingBag,
+  Car,
+  GraduationCap,
+  Home,
+  MoreHorizontal
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { EXPENSE_CATEGORIES } from '../constants/categories';
 import { parseInvoiceWithAI } from '../services/geminiService';
 import { analyticsService } from '../services/analyticsService';
+
+const CATEGORY_ICONS = {
+  food: Utensils,
+  shopping: ShoppingBag,
+  transport: Car,
+  education: GraduationCap,
+  living: Home,
+  other: MoreHorizontal
+};
 
 export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigateToDashboard }) {
   const [imageSrc, setImageSrc] = useState(null);
@@ -33,6 +48,8 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
   const [scanProgress, setScanProgress] = useState(0);
   const [parsedData, setParsedData] = useState(null);
   const [scanError, setScanError] = useState(null);
+  const [reviewTab, setReviewTab] = useState('basic'); // 'basic' | 'items'
+  const [showReceiptImage, setShowReceiptImage] = useState(false);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
   const videoRef = useRef(null);
@@ -505,64 +522,22 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
           </div>
           </div>
 
-          {/* Real-world Receipt Scanning Guide */}
+          {/* Minimalist Receipt Guide Tip */}
           <div style={{
             background: 'var(--bg-secondary)',
             border: '1px solid var(--border-subtle)',
-            borderRadius: '16px',
-            padding: '24px'
+            borderRadius: '14px',
+            padding: '14px 18px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            color: 'var(--text-secondary)',
+            fontSize: '12.5px',
+            lineHeight: 1.5
           }}>
-            <h3 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Sparkles size={16} color="var(--emerald-400)" />
-              <span>Hướng dẫn chụp & tải hóa đơn thực tế</span>
-            </h3>
-            
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-              gap: '16px'
-            }}>
-              <div style={{
-                background: 'var(--bg-tertiary)',
-                padding: '14px 16px',
-                borderRadius: '10px',
-                border: '1px solid var(--border-subtle)'
-              }}>
-                <div style={{ fontWeight: '600', fontSize: '13px', color: 'var(--emerald-400)', marginBottom: '4px' }}>
-                  📸 1. Đầy đủ ánh sáng & phẳng phiu
-                </div>
-                <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
-                  Đặt hóa đơn phẳng trên bàn hoặc nền tối, tránh bị bóng tay che khuất dòng chữ hoặc số tiền.
-                </p>
-              </div>
-
-              <div style={{
-                background: 'var(--bg-tertiary)',
-                padding: '14px 16px',
-                borderRadius: '10px',
-                border: '1px solid var(--border-subtle)'
-              }}>
-                <div style={{ fontWeight: '600', fontSize: '13px', color: 'var(--emerald-400)', marginBottom: '4px' }}>
-                  🧾 2. Đầy đủ các phần quan trọng
-                </div>
-                <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
-                  Bao gồm tên cửa hàng, ngày mua, danh sách từng món hàng và dòng tổng tiền thanh toán cuối cùng.
-                </p>
-              </div>
-
-              <div style={{
-                background: 'var(--bg-tertiary)',
-                padding: '14px 16px',
-                borderRadius: '10px',
-                border: '1px solid var(--border-subtle)'
-              }}>
-                <div style={{ fontWeight: '600', fontSize: '13px', color: 'var(--emerald-400)', marginBottom: '4px' }}>
-                  📱 3. Chụp biên lai ngân hàng / POS
-                </div>
-                <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
-                  Hỗ trợ cả ảnh chụp màn hình chuyển khoản VietQR, VNPay, MoMo và biên lai quẹt thẻ POS.
-                </p>
-              </div>
+            <Sparkles size={18} color="var(--emerald-400)" style={{ flexShrink: 0 }} />
+            <div>
+              <strong style={{ color: 'var(--text-primary)' }}>Mẹo quét nhanh:</strong> Chụp hóa đơn phẳng phiu, đủ sáng. Hỗ trợ mọi hóa đơn giấy, siêu thị, nhà hàng và ảnh chụp màn hình chuyển khoản VietQR, VNPay, MoMo.
             </div>
           </div>
         </div>
@@ -631,93 +606,210 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
         </div>
       )}
 
-      {/* Review & Confirmation Split View (Human-in-the-loop) */}
+      {/* Review & Confirmation (Tối giản, Dễ dùng, Không bị rối) */}
       {parsedData && !isScanning && (
-        <div style={{ maxWidth: '1180px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '780px', margin: '0 auto' }}>
+          {/* Top Hero Summary Card with 1-Tap Save */}
           <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            background: 'linear-gradient(145deg, rgba(16, 185, 129, 0.12), rgba(6, 182, 212, 0.08))',
+            border: '1.5px solid rgba(16, 185, 129, 0.35)',
+            borderRadius: '20px',
+            padding: '24px',
             marginBottom: '20px',
-            background: 'rgba(16, 185, 129, 0.1)',
-            padding: '12px 20px',
-            borderRadius: '12px',
-            border: '1px solid rgba(16, 185, 129, 0.3)'
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.25)',
+            position: 'relative'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <CheckCircle2 color="#34d399" size={20} />
-              <span style={{ fontSize: '14px', fontWeight: '600', color: '#34d399' }}>
-                AI đã trích xuất thành công! Bạn có thể kiểm tra và chỉnh sửa nhanh trước khi lưu.
-              </span>
-            </div>
-            <button onClick={resetScanner} className="btn btn-secondary btn-sm">
-              <RefreshCw size={14} /> Quét hóa đơn khác
-            </button>
-          </div>
-
-          <div className="grid-sidebar-main">
-            {/* Left Column: Receipt Document View */}
-            <div className="card" style={{ padding: '20px', textAlign: 'center' }}>
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between', 
-                marginBottom: '14px' 
-              }}>
-                <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-secondary)' }}>
-                  HÌNH ẢNH HÓA ĐƠN
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px',
+              marginBottom: '16px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CheckCircle2 color="#34d399" size={20} />
+                <span style={{ fontSize: '14px', fontWeight: '700', color: '#34d399' }}>
+                  AI đã quét xong hóa đơn!
                 </span>
-                <span style={{ 
-                  fontSize: '11px', 
-                  padding: '3px 8px', 
-                  borderRadius: '4px',
+                <span style={{
+                  fontSize: '11px',
+                  padding: '2px 8px',
+                  borderRadius: '9999px',
                   background: 'rgba(16, 185, 129, 0.2)',
                   color: '#34d399',
                   fontFamily: 'var(--font-mono)'
                 }}>
-                  Độ tin cậy: {Math.round(parsedData.confidence * 100)}%
+                  Độ tin cậy: {Math.round((parsedData.confidence || 0.95) * 100)}%
                 </span>
               </div>
 
-              <div style={{
-                maxHeight: '520px',
-                overflowY: 'auto',
-                borderRadius: '8px',
-                border: '1px solid var(--border-subtle)',
-                background: '#fcfaf2',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '10px'
-              }}>
-                {imageSrc && (
-                  <img 
-                    src={imageSrc} 
-                    alt="Receipt" 
-                    style={{ width: '100%', height: 'auto', borderRadius: '4px' }} 
-                  />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {(imageSrc || svgPreview) && (
+                  <button
+                    type="button"
+                    onClick={() => setShowReceiptImage(prev => !prev)}
+                    className="btn btn-secondary btn-sm"
+                    style={{ fontSize: '12px', padding: '6px 10px' }}
+                  >
+                    <ImageIcon size={14} />
+                    <span>{showReceiptImage ? 'Ẩn ảnh gốc' : 'Xem ảnh gốc'}</span>
+                  </button>
                 )}
-                {svgPreview && (
-                  <div 
-                    dangerouslySetInnerHTML={{ __html: svgPreview }} 
-                    style={{ width: '100%', height: 'auto' }} 
-                  />
-                )}
+                <button
+                  type="button"
+                  onClick={resetScanner}
+                  className="btn btn-secondary btn-sm"
+                  style={{ fontSize: '12px', padding: '6px 10px' }}
+                >
+                  <RefreshCw size={14} />
+                  <span>Quét lại</span>
+                </button>
               </div>
             </div>
 
-            {/* Right Column: Structured Editable Form */}
-            <div className="card" style={{ padding: '24px' }}>
-              <h3 style={{ fontSize: '18px', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FileCheck color="var(--emerald-400)" size={20} />
-                Thông Tin Chi Tiết Giao Dịch
-              </h3>
+            {/* Receipt Image Drawer (Collapsible) */}
+            {showReceiptImage && (imageSrc || svgPreview) && (
+              <div style={{
+                marginBottom: '18px',
+                padding: '12px',
+                borderRadius: '12px',
+                background: 'rgba(0, 0, 0, 0.4)',
+                border: '1px solid var(--border-subtle)',
+                textAlign: 'center',
+                maxHeight: '340px',
+                overflowY: 'auto'
+              }}>
+                {imageSrc && (
+                  <img
+                    src={imageSrc}
+                    alt="Receipt"
+                    style={{ maxWidth: '100%', maxHeight: '300px', objectFit: 'contain', borderRadius: '8px' }}
+                  />
+                )}
+                {svgPreview && (
+                  <div dangerouslySetInnerHTML={{ __html: svgPreview }} style={{ maxHeight: '300px', overflow: 'hidden' }} />
+                )}
+              </div>
+            )}
 
-              {/* Merchant & Category */}
-              <div className="grid-2col" style={{ marginBottom: '14px' }}>
-                <div>
-                  <label className="label">
-                    <Store size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
+            {/* Total and Merchant Highlight */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '16px',
+              padding: '16px 20px',
+              background: 'var(--bg-secondary)',
+              borderRadius: '14px',
+              border: '1px solid var(--border-subtle)',
+              marginBottom: '18px'
+            }}>
+              <div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>
+                  Tổng tiền thanh toán
+                </div>
+                <div style={{
+                  fontSize: '28px',
+                  fontWeight: '800',
+                  color: 'var(--emerald-400)',
+                  fontFamily: 'var(--font-mono)'
+                }}>
+                  {analyticsService.formatCurrency(parsedData.total)}
+                </div>
+              </div>
+
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '4px' }}>
+                  {parsedData.merchant || 'Hóa đơn'}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                  <span>{parsedData.date || 'Hôm nay'}</span>
+                  <span>•</span>
+                  <span>{EXPENSE_CATEGORIES[parsedData.category]?.name || 'Khác'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Primary 1-Tap Save Action */}
+            <button
+              type="button"
+              onClick={handleSaveTransaction}
+              className="btn btn-primary"
+              style={{
+                width: '100%',
+                padding: '14px',
+                fontSize: '15px',
+                fontWeight: '800',
+                borderRadius: '12px',
+                boxShadow: '0 4px 18px rgba(16, 185, 129, 0.45)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}
+            >
+              <CheckCircle2 size={19} />
+              <span>Xác Nhận & Lưu Vào Sổ Chi Tiêu</span>
+            </button>
+          </div>
+
+          {/* Quick Edit Sections (Clean Tabs) */}
+          <div className="card" style={{ padding: '20px', borderRadius: '18px' }}>
+            <div style={{
+              display: 'flex',
+              borderBottom: '1px solid var(--border-subtle)',
+              marginBottom: '18px',
+              gap: '8px'
+            }}>
+              <button
+                type="button"
+                onClick={() => setReviewTab('basic')}
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: reviewTab === 'basic' ? '2px solid var(--emerald-400)' : '2px solid transparent',
+                  color: reviewTab === 'basic' ? 'var(--emerald-400)' : 'var(--text-muted)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <Store size={15} />
+                <span>Thông tin chung</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setReviewTab('items')}
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: reviewTab === 'items' ? '2px solid var(--emerald-400)' : '2px solid transparent',
+                  color: reviewTab === 'items' ? 'var(--emerald-400)' : 'var(--text-muted)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <Layers size={15} />
+                <span>Chi tiết món & Thuế ({parsedData.items?.length || 0})</span>
+              </button>
+            </div>
+
+            {/* Tab 1: Thông tin chung */}
+            {reviewTab === 'basic' && (
+              <div>
+                <div style={{ marginBottom: '14px' }}>
+                  <label className="label" style={{ fontSize: '12px', marginBottom: '6px' }}>
                     Tên cửa hàng / Đơn vị
                   </label>
                   <input
@@ -725,212 +817,242 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
                     className="input"
                     value={parsedData.merchant || ''}
                     onChange={(e) => updateField('merchant', e.target.value)}
+                    style={{ fontSize: '14px', padding: '9px 12px' }}
                   />
                 </div>
-                <div>
-                  <label className="label">
-                    <Tag size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
+
+                {/* 1-tap category grid */}
+                <div style={{ marginBottom: '14px' }}>
+                  <label className="label" style={{ fontSize: '12px', marginBottom: '6px' }}>
                     Danh mục chi tiêu
                   </label>
-                  <select
-                    className="select"
-                    value={parsedData.category || 'other'}
-                    onChange={(e) => updateField('category', e.target.value)}
-                  >
-                    {Object.entries(EXPENSE_CATEGORIES).map(([key, cat]) => (
-                      <option key={key} value={key}>
-                        {cat.name} ({cat.englishName})
-                      </option>
-                    ))}
-                  </select>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: '8px'
+                  }}>
+                    {Object.entries(EXPENSE_CATEGORIES).map(([key, cat]) => {
+                      const isSelected = parsedData.category === key;
+                      const IconComponent = CATEGORY_ICONS[key] || MoreHorizontal;
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => updateField('category', key)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '7px',
+                            padding: '8px 10px',
+                            borderRadius: '10px',
+                            border: isSelected ? `1.5px solid ${cat.color}` : '1px solid var(--border-subtle)',
+                            background: isSelected ? cat.bgColor : 'var(--bg-tertiary)',
+                            color: isSelected ? '#ffffff' : 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            fontWeight: isSelected ? '700' : '500',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <IconComponent size={15} color={cat.color} style={{ flexShrink: 0 }} />
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {cat.name}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
 
-              {/* Date, Invoice #, Payment */}
-              <div className="grid-3col" style={{ marginBottom: '16px' }}>
-                <div>
-                  <label className="label">
-                    <Calendar size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
-                    Ngày giao dịch
-                  </label>
-                  <input
-                    type="date"
-                    className="input"
-                    value={parsedData.date || ''}
-                    onChange={(e) => updateField('date', e.target.value)}
-                  />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                      Ngày giao dịch
+                    </label>
+                    <input
+                      type="date"
+                      className="input"
+                      value={parsedData.date || ''}
+                      onChange={(e) => updateField('date', e.target.value)}
+                      style={{ fontSize: '12px', padding: '8px 10px' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                      Hình thức thanh toán
+                    </label>
+                    <input
+                      type="text"
+                      className="input"
+                      value={parsedData.paymentMethod || 'Tiền mặt'}
+                      onChange={(e) => updateField('paymentMethod', e.target.value)}
+                      style={{ fontSize: '12px', padding: '8px 10px' }}
+                    />
+                  </div>
                 </div>
+
                 <div>
-                  <label className="label">Số hóa đơn / HĐ</label>
+                  <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                    Số hóa đơn / Mã tham chiếu
+                  </label>
                   <input
                     type="text"
                     className="input"
                     value={parsedData.invoiceNumber || ''}
                     onChange={(e) => updateField('invoiceNumber', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="label">
-                    <CreditCard size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
-                    Hình thức
-                  </label>
-                  <input
-                    type="text"
-                    className="input"
-                    value={parsedData.paymentMethod || 'Tiền mặt'}
-                    onChange={(e) => updateField('paymentMethod', e.target.value)}
+                    placeholder="VD: HD-12345"
+                    style={{ fontSize: '12px', padding: '8px 10px' }}
                   />
                 </div>
               </div>
+            )}
 
-              {/* Items Breakdown Table */}
-              <div style={{ marginBottom: '18px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <label className="label" style={{ margin: 0 }}>
-                    <Layers size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
-                    Danh sách món / Sản phẩm đã bóc tách ({parsedData.items?.length || 0})
-                  </label>
-                  <button type="button" onClick={addItem} className="btn btn-secondary btn-sm" style={{ padding: '3px 8px', fontSize: '12px' }}>
-                    <Plus size={12} /> Thêm món
+            {/* Tab 2: Chi tiết các món & Thuế/Giảm giá */}
+            {reviewTab === 'items' && (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>
+                    Danh sách món ({parsedData.items?.length || 0})
+                  </span>
+                  <button
+                    type="button"
+                    onClick={addItem}
+                    className="btn btn-secondary btn-sm"
+                    style={{ padding: '4px 10px', fontSize: '12px' }}
+                  >
+                    <Plus size={13} /> Thêm món mới
                   </button>
                 </div>
 
-                <div style={{
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: '10px',
-                  overflow: 'hidden'
-                }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                    <thead>
-                      <tr style={{ background: 'var(--bg-tertiary)', textAlign: 'left', color: 'var(--text-secondary)' }}>
-                        <th style={{ padding: '8px 10px' }}>Tên sản phẩm</th>
-                        <th style={{ padding: '8px 10px', width: '60px' }}>SL</th>
-                        <th style={{ padding: '8px 10px', width: '100px' }}>Đơn giá</th>
-                        <th style={{ padding: '8px 10px', width: '110px' }}>Thành tiền</th>
-                        <th style={{ padding: '8px 10px', width: '40px' }}></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {parsedData.items?.map((item, index) => (
-                        <tr key={index} style={{ borderTop: '1px solid var(--border-subtle)' }}>
-                          <td style={{ padding: '6px 10px' }}>
-                            <input
-                              type="text"
-                              className="input"
-                              style={{ padding: '4px 8px', fontSize: '13px' }}
-                              value={item.name}
-                              onChange={(e) => handleItemChange(index, 'name', e.target.value)}
-                            />
-                          </td>
-                          <td style={{ padding: '6px 10px' }}>
-                            <input
-                              type="number"
-                              className="input"
-                              style={{ padding: '4px 8px', fontSize: '13px', textAlign: 'center' }}
-                              value={item.quantity}
-                              min="1"
-                              onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                            />
-                          </td>
-                          <td style={{ padding: '6px 10px' }}>
-                            <input
-                              type="number"
-                              className="input"
-                              style={{ padding: '4px 8px', fontSize: '13px', fontFamily: 'var(--font-mono)' }}
-                              value={item.unitPrice}
-                              onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)}
-                            />
-                          </td>
-                          <td style={{ padding: '6px 10px', fontWeight: '600', fontFamily: 'var(--font-mono)' }}>
-                            {analyticsService.formatCurrency(item.total)}
-                          </td>
-                          <td style={{ padding: '6px 10px', textAlign: 'center' }}>
-                            <button
-                              type="button"
-                              onClick={() => removeItem(index)}
-                              style={{
-                                background: 'transparent',
-                                border: 'none',
-                                color: '#fb7185',
-                                cursor: 'pointer',
-                                padding: '4px'
-                              }}
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+                  {parsedData.items?.map((item, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        background: 'var(--bg-tertiary)',
+                        borderRadius: '10px',
+                        padding: '10px 12px',
+                        border: '1px solid var(--border-subtle)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        flexWrap: 'wrap'
+                      }}
+                    >
+                      <input
+                        type="text"
+                        className="input"
+                        placeholder="Tên món hàng"
+                        style={{ flex: 3, minWidth: '130px', padding: '6px 8px', fontSize: '13px' }}
+                        value={item.name}
+                        onChange={(e) => handleItemChange(index, 'name', e.target.value)}
+                      />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1, minWidth: '70px' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>SL:</span>
+                        <input
+                          type="number"
+                          className="input"
+                          min="1"
+                          style={{ width: '45px', padding: '6px 4px', textAlign: 'center', fontSize: '12px' }}
+                          value={item.quantity}
+                          onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 2, minWidth: '100px' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Giá:</span>
+                        <input
+                          type="number"
+                          className="input"
+                          style={{ width: '100%', padding: '6px 6px', fontSize: '12px', fontFamily: 'var(--font-mono)' }}
+                          value={item.unitPrice}
+                          onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)}
+                        />
+                      </div>
+                      <div style={{
+                        fontSize: '13px',
+                        fontWeight: '700',
+                        color: 'var(--emerald-400)',
+                        fontFamily: 'var(--font-mono)',
+                        minWidth: '80px',
+                        textAlign: 'right'
+                      }}>
+                        {analyticsService.formatCurrency(item.total)}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeItem(index)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#fb7185',
+                          cursor: 'pointer',
+                          padding: '4px'
+                        }}
+                        title="Xóa món"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              </div>
 
-              {/* Total Calculation Card */}
-              <div style={{
-                background: 'var(--bg-tertiary)',
-                borderRadius: '12px',
-                padding: '14px 18px',
-                marginBottom: '20px'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Thuế GTGT (VAT):</span>
-                  <input
-                    type="number"
-                    className="input"
-                    style={{ width: '130px', padding: '3px 8px', height: '28px', textAlign: 'right', fontFamily: 'var(--font-mono)' }}
-                    value={parsedData.vat || 0}
-                    onChange={(e) => updateField('vat', Number(e.target.value) || 0)}
-                  />
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Giảm giá / Voucher:</span>
-                  <input
-                    type="number"
-                    className="input"
-                    style={{ width: '130px', padding: '3px 8px', height: '28px', textAlign: 'right', fontFamily: 'var(--font-mono)' }}
-                    value={parsedData.discount || 0}
-                    onChange={(e) => updateField('discount', Number(e.target.value) || 0)}
-                  />
-                </div>
+                {/* VAT & Discount */}
                 <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  paddingTop: '8px',
-                  borderTop: '1px solid var(--border-subtle)'
+                  background: 'var(--bg-tertiary)',
+                  borderRadius: '12px',
+                  padding: '12px 16px',
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '12px',
+                  border: '1px solid var(--border-subtle)'
                 }}>
-                  <span style={{ fontSize: '16px', fontWeight: '800' }}>TỔNG TIỀN THANH TOÁN:</span>
-                  <span style={{
-                    fontSize: '22px',
-                    fontWeight: '800',
-                    color: 'var(--emerald-400)',
-                    fontFamily: 'var(--font-mono)'
-                  }}>
-                    {analyticsService.formatCurrency(parsedData.total)}
-                  </span>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                      Thuế VAT (VNĐ)
+                    </label>
+                    <input
+                      type="number"
+                      className="input"
+                      style={{ fontSize: '12px', padding: '6px 8px', fontFamily: 'var(--font-mono)' }}
+                      value={parsedData.vat || 0}
+                      onChange={(e) => updateField('vat', Number(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                      Giảm giá / Voucher (VNĐ)
+                    </label>
+                    <input
+                      type="number"
+                      className="input"
+                      style={{ fontSize: '12px', padding: '6px 8px', fontFamily: 'var(--font-mono)' }}
+                      value={parsedData.discount || 0}
+                      onChange={(e) => updateField('discount', Number(e.target.value) || 0)}
+                    />
+                  </div>
                 </div>
               </div>
+            )}
 
-              {/* Save Button */}
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button
-                  type="button"
-                  onClick={handleSaveTransaction}
-                  className="btn btn-primary btn-lg"
-                  style={{ flex: 1 }}
-                >
-                  <CheckCircle2 size={18} />
-                  <span>Xác nhận & Lưu vào Sổ chi tiêu</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={resetScanner}
-                  className="btn btn-secondary btn-lg"
-                >
-                  Hủy bỏ
-                </button>
-              </div>
+            {/* Bottom Actions */}
+            <div style={{ display: 'flex', gap: '10px', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
+              <button
+                type="button"
+                onClick={resetScanner}
+                className="btn btn-secondary"
+                style={{ flex: 1, padding: '10px', fontSize: '13px' }}
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveTransaction}
+                className="btn btn-primary"
+                style={{ flex: 2, padding: '10px', fontSize: '13px', fontWeight: '700' }}
+              >
+                <CheckCircle2 size={16} />
+                <span>Lưu Giao Dịch</span>
+              </button>
             </div>
           </div>
         </div>

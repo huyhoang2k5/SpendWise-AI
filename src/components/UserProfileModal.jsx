@@ -486,7 +486,7 @@ export default function UserProfileModal({
             <div className="grid-2col">
               <div>
                 <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
-                  Tên Đăng Nhập * (Dùng để đăng nhập)
+                  Tên Đăng Nhập *
                 </label>
                 <div style={{ position: 'relative' }}>
                   <User size={16} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }} />
@@ -514,18 +514,18 @@ export default function UserProfileModal({
                     style={{ paddingLeft: '38px', width: '100%' }}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Nhập họ và tên của bạn..."
+                    placeholder="Nhập họ và tên..."
                     required
                   />
                 </div>
               </div>
             </div>
 
-            {/* Email (Personal Contact Info) & Role (Freely typed manually!) */}
+            {/* Email & Role */}
             <div className="grid-2col">
               <div>
                 <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
-                  Gmail / Email liên hệ (Thông tin cá nhân)
+                  Gmail / Email
                 </label>
                 <div style={{ position: 'relative' }}>
                   <Mail size={16} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }} />
@@ -542,7 +542,7 @@ export default function UserProfileModal({
 
               <div>
                 <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
-                  Nhóm Đối Tượng / Nghề Nghiệp (Gõ tay tùy ý)
+                  Nghề nghiệp / Đối tượng
                 </label>
                 <div style={{ position: 'relative' }}>
                   <Briefcase size={16} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }} />
@@ -552,7 +552,7 @@ export default function UserProfileModal({
                     style={{ paddingLeft: '38px', width: '100%' }}
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
-                    placeholder="VD: Lập trình viên, Bác sĩ, Sinh viên..."
+                    placeholder="VD: Sinh viên, Người đi làm..."
                     required
                   />
                 </div>
@@ -561,11 +561,8 @@ export default function UserProfileModal({
 
             {/* Suggested quick-chips for Role */}
             <div>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
-                Gợi ý nhanh (nhấp để chọn hoặc tự do gõ chữ ở trên):
-              </span>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                {SUGGESTED_ROLES.map((sug) => (
+                {SUGGESTED_ROLES.slice(0, 6).map((sug) => (
                   <button
                     key={sug}
                     type="button"
@@ -591,9 +588,9 @@ export default function UserProfileModal({
             <div className="grid-2col" style={{ gap: '16px' }}>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span>Mật Khẩu Đăng Nhập</span>
+                  <span>Mật Khẩu Mới</span>
                   <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '400' }}>
-                    (Bỏ trống nếu giữ nguyên)
+                    (Bỏ trống nếu không đổi)
                   </span>
                 </label>
                 <div style={{ position: 'relative' }}>
@@ -604,7 +601,7 @@ export default function UserProfileModal({
                     style={{ paddingLeft: '38px', paddingRight: '36px', width: '100%', fontFamily: 'var(--font-mono)' }}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="•••••••• (Bảo mật Bcrypt)"
+                    placeholder="Nhập nếu muốn đổi..."
                     autoComplete="new-password"
                   />
                   <button
@@ -624,14 +621,11 @@ export default function UserProfileModal({
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', lineHeight: 1.3 }}>
-                  Mật khẩu được mã hóa an toàn trên MongoDB. Chỉ nhập vào ô này khi muốn đổi mật khẩu mới.
-                </div>
               </div>
 
               <div>
                 <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span>Ngân Sách Tháng Dự Kiến</span>
+                  <span>Ngân Sách Tháng</span>
                   <span style={{ fontSize: '11px', color: 'var(--emerald-400)', fontWeight: '700', fontFamily: 'var(--font-mono)' }}>
                     {Number(monthlyBudget || 0).toLocaleString('vi-VN')} đ
                   </span>
@@ -649,9 +643,6 @@ export default function UserProfileModal({
                     min="500000"
                     required
                   />
-                </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', lineHeight: 1.3 }}>
-                  Hạn mức dùng để cảnh báo chi tiêu và tính tỷ lệ hoàn thành mục tiêu tài chính.
                 </div>
               </div>
             </div>
