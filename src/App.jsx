@@ -236,6 +236,19 @@ export default function App() {
 
   const handleConfirmClear = async (password) => {
     if (!currentUser) return;
+
+    // Bước 1: Xác thực mật khẩu tài khoản trực tiếp qua API auth trước!
+    // Nếu sai mật khẩu, server auth sẽ ném lỗi 401 và chặn ngay lập tức.
+    try {
+      await authApi.login({
+        username: currentUser.username,
+        password: password
+      });
+    } catch {
+      throw new Error('Mật khẩu tài khoản không chính xác. Hành động bị từ chối!');
+    }
+
+    // Bước 2: Khi và chỉ khi mật khẩu đã đúng 100%, mới thực thi lệnh xóa
     const result = await transactionsApi.deleteAll(password);
     setTransactions([]);
     addToast(result.message || 'Đã làm trống sổ chi tiêu thành công!', 'info');
