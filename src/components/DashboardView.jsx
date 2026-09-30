@@ -121,7 +121,7 @@ export default function DashboardView({
       }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-            <h1 style={{ fontSize: '26px' }}>Bảng Thống Kê Tài Chính</h1>
+            <h1 style={{ fontSize: '26px' }}>Bảng Thống Kê Chi Tiêu</h1>
             <span style={{
               fontSize: '11px',
               padding: '3px 8px',
@@ -156,7 +156,7 @@ export default function DashboardView({
                 e.currentTarget.style.background = 'rgba(56, 189, 248, 0.12)';
                 e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.3)';
               }}
-              title="Nhấn vào để xem toàn bộ hóa đơn & giao dịch tháng trước (08/2026)"
+              title="Xem hóa đơn tháng trước"
             >
               <Calendar size={12} />
               <span>{stats.prevMonthLabel || 'Tháng trước'}: {analyticsService.formatCurrency(stats.prevMonthTotal)}</span>
@@ -164,7 +164,7 @@ export default function DashboardView({
             </button>
           </div>
           <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-            Phân tích tự động thói quen chi tiêu theo ngày, tuần và tháng từ các hóa đơn đã quét
+            Tổng quan chi tiêu và ngân sách của bạn
           </p>
         </div>
 
@@ -174,7 +174,7 @@ export default function DashboardView({
             className="btn btn-primary"
           >
             <ScanLine size={17} />
-            <span>Quét Hóa Đơn Ngay</span>
+            <span>Quét Hóa Đơn</span>
           </button>
           <button
             onClick={openManualModal}
@@ -219,14 +219,14 @@ export default function DashboardView({
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontWeight: '700', fontSize: '15px' }}>
-                Đánh giá sức khỏe tài chính AI: {stats.healthScore >= 80 ? 'Rất tốt' : stats.healthScore >= 60 ? 'Cần chú ý' : 'Cảnh báo quá chi'}
+                Sức khỏe tài chính: {stats.healthScore >= 80 ? 'Rất tốt' : stats.healthScore >= 60 ? 'Cần chú ý' : 'Cảnh báo quá chi'}
               </span>
               <Sparkles size={16} color="#34d399" />
             </div>
             <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '2px' }}>
               {stats.isOverBudget 
-                ? '⚠️ Bạn đã vượt ngân sách tháng này! Hãy xem khuyến nghị từ Trợ lý AI để cân bằng lại chi tiêu.'
-                : `Dự báo chi tiêu cuối tháng khoảng ${analyticsService.formatCurrency(stats.projectedMonthEnd)}, vẫn nằm trong hạn mức an toàn.`}
+                ? '⚠️ Bạn đã vượt ngân sách tháng này. Hãy kiểm soát lại các khoản chi.'
+                : 'Chi tiêu đang nằm trong hạn mức an toàn.'}
             </p>
           </div>
         </div>
@@ -235,7 +235,7 @@ export default function DashboardView({
           onClick={() => onNavigateToTab('advisor')}
           className="btn btn-outline btn-sm"
         >
-          <span>Xem Lời Khuyên AI</span>
+          <span>Xem gợi ý AI</span>
           <ChevronRight size={15} />
         </button>
       </div>
@@ -258,7 +258,7 @@ export default function DashboardView({
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
             <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>
-              TỔNG CHI TIÊU THÁNG ({stats.currentMonthDisplay})
+              TỔNG CHI TIÊU ({stats.currentMonthDisplay})
             </span>
             <div style={{
               width: '36px',
@@ -280,7 +280,6 @@ export default function DashboardView({
             <span style={{ color: '#34d399', fontWeight: '600' }}>
               {stats.totalTransactions} giao dịch
             </span>
-            <span>đã ghi nhận qua hóa đơn</span>
           </div>
 
           {/* 1 Single Button Dropdown: Chọn xem hóa đơn 3 tháng gần nhất */}
@@ -329,7 +328,7 @@ export default function DashboardView({
                       flex: 1,
                       padding: '4px 0'
                     }}
-                    title="Nhấn để mở danh sách toàn bộ hóa đơn tháng này"
+                    title="Xem hóa đơn"
                   >
                     <div style={{
                       width: '28px',
@@ -345,18 +344,8 @@ export default function DashboardView({
                       <Calendar size={15} />
                     </div>
                     <div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <span>Xem hóa đơn:</span>
-                        <span style={{
-                          fontSize: '9px',
-                          fontWeight: '700',
-                          padding: '0 4px',
-                          borderRadius: '3px',
-                          background: 'rgba(16, 185, 129, 0.25)',
-                          color: '#6ee7b7'
-                        }}>
-                          {currentSelectedMonthObj.tag}
-                        </span>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                        {currentSelectedMonthObj.tag}
                       </div>
                       <div style={{ fontSize: '13px', fontWeight: '800', color: '#34d399' }}>
                         {currentSelectedMonthObj.shortLabel}
@@ -374,7 +363,7 @@ export default function DashboardView({
                       role="button"
                       tabIndex={0}
                       style={{ textAlign: 'right', cursor: 'pointer' }}
-                      title="Nhấn vào số tiền để xem chi tiết hóa đơn"
+                      title="Xem hóa đơn"
                     >
                       <div style={{ fontSize: '13px', fontWeight: '800', fontFamily: 'var(--font-mono)', color: 'var(--emerald-400)' }}>
                         {analyticsService.formatCurrency(currentSelectedMonthObj.total)}
@@ -405,7 +394,7 @@ export default function DashboardView({
                         fontSize: '10px',
                         fontWeight: '700'
                       }}
-                      title="Chọn tháng 6, 7 hoặc 8"
+                      title="Chọn tháng"
                     >
                       <span>Tháng</span>
                       <ChevronDown 
@@ -445,7 +434,7 @@ export default function DashboardView({
                       borderBottom: '1px solid var(--border-subtle)',
                       marginBottom: '4px'
                     }}>
-                      Chọn 1 trong 3 tháng gần nhất để xem hóa đơn:
+                      Xem hóa đơn theo tháng:
                     </div>
                     {(stats.recentMonths || []).map((m) => {
                       const isSelected = m.key === selectedMonthPrefix;
@@ -485,7 +474,7 @@ export default function DashboardView({
                               </span>
                             </div>
                             <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                              {m.count} hóa đơn đã ghi nhận
+                              {m.count} hóa đơn
                             </div>
                           </div>
                           <div style={{ textAlign: 'right' }}>
@@ -493,7 +482,7 @@ export default function DashboardView({
                               {analyticsService.formatCurrency(m.total)}
                             </div>
                             <span style={{ fontSize: '10px', color: '#38bdf8', fontWeight: '700' }}>
-                              Mở xem hóa đơn ↗
+                              Xem ↗
                             </span>
                           </div>
                         </div>
@@ -626,7 +615,7 @@ export default function DashboardView({
             Phân Bổ Chi Tiêu Theo Danh Mục
           </h3>
           <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '20px' }}>
-            Tỷ lệ phần trăm 6 nhóm chi tiêu trong tháng (Mục 4.3.3)
+            Tỷ lệ phân bổ theo nhóm chi tiêu
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -728,7 +717,7 @@ export default function DashboardView({
                   Biểu Đồ Chi Tiêu
                 </h3>
                 <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                  Phân tích chi tiêu theo Ngày / Tuần / Tháng (Mục 3.b)
+                  Biến động chi tiêu theo thời gian
                 </p>
               </div>
 

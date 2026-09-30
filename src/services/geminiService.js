@@ -69,16 +69,16 @@ export async function parseInvoiceWithAI({ imageFile, imageBase64, sampleId = nu
     if (onProgress) onProgress({ step, progress });
   };
 
-  notify('Khởi động mô-đun AI Vision & Computer Vision...', 15);
+  notify('Đang tải ảnh hóa đơn...', 15);
   await new Promise(r => setTimeout(r, 600));
 
-  notify('Đang tiền xử lý ảnh hóa đơn & cân bằng độ tương phản...', 35);
+  notify('Đang tối ưu ảnh...', 35);
   await new Promise(r => setTimeout(r, 700));
 
   // If live Gemini API Key is available, run real Multimodal inference
   if (apiKey && apiKey.trim().length > 10) {
     try {
-      notify('Đang kết nối Gemini AI Vision...', 60);
+      notify('AI đang quét nội dung...', 60);
       
       const ai = createGenAIClient(apiKey);
       
@@ -126,7 +126,7 @@ Quy tắc kiểm tra:
 3. Luôn phân loại danh mục chính xác dựa theo tính chất món hàng.
 `;
 
-      notify('Mô hình AI đang bóc tách từng dòng chữ, số tiền và tính toán tổng chi...', 80);
+      notify('Đang trích xuất thông tin...', 80);
 
       const requestPayload = {
         contents: [
@@ -147,7 +147,7 @@ Quy tắc kiểm tra:
 
       const response = await generateWithModels(ai, requestPayload, DEFAULT_MODELS);
 
-      notify('Hoàn tất trích xuất dữ liệu có cấu trúc!', 98);
+      notify('Hoàn tất xử lý!', 98);
       const rawText = response.text || '';
       
       // Clean possible markdown code fences
@@ -193,10 +193,10 @@ Quy tắc kiểm tra:
   }
 
   // Local Intelligent Heuristic Parser (Only used when NO API key provided or demo mode)
-  notify('Đang phân tích layout hóa đơn & nhận diện thực thể tiếng Việt...', 70);
+  notify('Đang đọc thông tin hóa đơn...', 70);
   await new Promise(r => setTimeout(r, 700));
 
-  notify('Bóc tách số tiền, thuế GTGT & tự động phân loại danh mục...', 90);
+  notify('Đang phân loại chi tiêu...', 90);
   await new Promise(r => setTimeout(r, 600));
 
   // Determine realistic simulated extraction
@@ -382,7 +382,7 @@ ${tips}`;
   // Intent 2: Dự báo chi tiêu cuối tháng
   if (lowerQuery.includes('dự báo') || lowerQuery.includes('cuối tháng') || lowerQuery.includes('hết tháng')) {
     const isOver = projectedMonthEnd > monthlyBudget;
-    return `🔮 **Dự báo chi tiêu cuối tháng (Mô hình Machine Learning):**
+    return `🔮 **Dự báo chi tiêu cuối tháng:**
 
 • **Tốc độ chi tiêu hiện tại:** Trung bình **${dailyAverage.toLocaleString('vi-VN')} đ/ngày** (qua ${transactions.length || totalTransactions} hóa đơn).
 • **Dự báo tổng chi tiêu cả tháng:** Khoảng **${projectedMonthEnd.toLocaleString('vi-VN')} đ**.

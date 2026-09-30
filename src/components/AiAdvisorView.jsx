@@ -21,9 +21,8 @@ export default function AiAdvisorView({ transactions, monthlyBudget, categoryBud
   const [messages, setMessages] = useState([
     {
       sender: 'ai',
-      text: `Xin chào! Tôi là **SpendWise AI**, trợ lý tài chính cá nhân thông minh của bạn. 
-Tôi đã phân tích ${stats.totalTransactions} hóa đơn trong tháng 09/2026 của bạn với tổng chi tiêu **${analyticsService.formatCurrency(stats.totalSpent)}**.
-Bạn muốn tôi giải đáp điều gì về thói quen chi tiêu hoặc cách tối ưu tài chính cá nhân hôm nay?`,
+      text: `Xin chào! Tôi đã tổng hợp ${stats.totalTransactions} khoản chi trong ${stats.currentMonthDisplay || 'tháng này'} với tổng cộng **${analyticsService.formatCurrency(stats.totalSpent)}**.
+Bạn cần gợi ý hay tối ưu khoản nào hôm nay?`,
       time: 'Vừa xong'
     }
   ]);
@@ -71,7 +70,7 @@ Bạn muốn tôi giải đáp điều gì về thói quen chi tiêu hoặc các
         momDiff: stats.momDiff,
         momPercent: stats.momPercent,
         transactions: (transactions || [])
-          .filter(t => t.date && t.date.startsWith(stats.currentMonthPrefix || '2026-09'))
+          .filter(t => t.date && t.date.startsWith(stats.currentMonthPrefix || '2026-10'))
           .map(t => ({
             id: t.id,
             merchant: t.merchant,
@@ -129,13 +128,13 @@ Bạn muốn tôi giải đáp điều gì về thói quen chi tiêu hoặc các
           marginBottom: '14px'
         }}>
           <Bot size={16} />
-          <span>AI Financial Intelligence & Machine Learning</span>
+          <span>Cố Vấn Tài Chính AI</span>
         </div>
-        <h1 style={{ fontSize: '30px', marginBottom: '8px' }}>
-          Phân Tích Thói Quen & Cố Vấn Tài Chính AI
+        <h1 style={{ fontSize: '28px', marginBottom: '8px' }}>
+          Cố Vấn Chi Tiêu AI
         </h1>
-        <p style={{ color: 'var(--text-secondary)', maxWidth: '640px', margin: '0 auto', fontSize: '15px' }}>
-          Mô hình Machine Learning phân tích các giao dịch trong quá khứ để phát hiện xu hướng bất thường, dự báo dòng tiền tương lai và đưa ra chiến lược tối ưu ngân sách.
+        <p style={{ color: 'var(--text-secondary)', maxWidth: '600px', margin: '0 auto', fontSize: '14px' }}>
+          Phân tích thói quen chi tiêu, dự báo dòng tiền và gợi ý cách tiết kiệm phù hợp cho bạn.
         </p>
       </div>
 
@@ -146,7 +145,7 @@ Bạn muốn tôi giải đáp điều gì về thói quen chi tiêu hoặc các
         gap: '20px',
         marginBottom: '32px'
       }}>
-        {/* Card 1: Machine Learning Spending Forecast */}
+        {/* Card 1: Spending Forecast */}
         <div className="card" style={{ padding: '22px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
             <div style={{
@@ -162,15 +161,14 @@ Bạn muốn tôi giải đáp điều gì về thói quen chi tiêu hoặc các
               <TrendingUp size={20} />
             </div>
             <div>
-              <h4 style={{ fontSize: '15px', fontWeight: '700' }}>Dự Báo Chi Tiêu Cuối Tháng</h4>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Thuật toán Linear Projection</span>
+              <h4 style={{ fontSize: '15px', fontWeight: '700' }}>Dự Báo Chi Tiêu</h4>
             </div>
           </div>
           <div style={{ fontSize: '24px', fontWeight: '800', fontFamily: 'var(--font-mono)', color: 'var(--emerald-400)', marginBottom: '8px' }}>
             ~ {analyticsService.formatCurrency(stats.projectedMonthEnd)}
           </div>
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-            Dựa trên nhịp độ chi tiêu trung bình {analyticsService.formatCurrency(stats.dailyAverage)}/ngày, hệ thống dự báo bạn sẽ kết thúc tháng 9 trong khoảng <strong>{analyticsService.formatCurrency(stats.projectedMonthEnd)}</strong>.
+            Chi tiêu trung bình {analyticsService.formatCurrency(stats.dailyAverage)}/ngày, dự kiến cả tháng hết khoảng <strong>{analyticsService.formatCurrency(stats.projectedMonthEnd)}</strong>.
           </p>
         </div>
 
@@ -191,7 +189,6 @@ Bạn muốn tôi giải đáp điều gì về thói quen chi tiêu hoặc các
             </div>
             <div>
               <h4 style={{ fontSize: '15px', fontWeight: '700' }}>Phát Hiện Bất Thường</h4>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Anomaly Detection Engine</span>
             </div>
           </div>
           <div style={{ fontSize: '15px', fontWeight: '700', marginBottom: '6px', color: '#fbbf24' }}>
@@ -199,8 +196,8 @@ Bạn muốn tôi giải đáp điều gì về thói quen chi tiêu hoặc các
           </div>
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
             {stats.peakDay 
-              ? `Khoản chi ${analyticsService.formatCurrency(stats.peakDay.amount)} trong ngày ${stats.peakDay.displayDate} cao gấp ${Math.round(stats.peakDay.amount / stats.dailyAverage)} lần trung bình ngày. Hãy chú ý kiểm soát các dịp cuối tuần.`
-              : 'Không có giao dịch nào bất thường hoặc lệch quá lớn so với thói quen hàng ngày.'}
+              ? `Ngày ${stats.peakDay.displayDate} có khoản chi ${analyticsService.formatCurrency(stats.peakDay.amount)} cao hơn bình thường. Bạn nên chú ý cân đối.`
+              : 'Chi tiêu các ngày đều ở mức ổn định, không có khoản đột biến.'}
           </p>
         </div>
 
@@ -220,15 +217,14 @@ Bạn muốn tôi giải đáp điều gì về thói quen chi tiêu hoặc các
               <Lightbulb size={20} />
             </div>
             <div>
-              <h4 style={{ fontSize: '15px', fontWeight: '700' }}>Đề Xuất Tiết Kiệm Tức Thì</h4>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Chiến lược vi mô</span>
+              <h4 style={{ fontSize: '15px', fontWeight: '700' }}>Gợi Ý Tiết Kiệm</h4>
             </div>
           </div>
           <div style={{ fontSize: '15px', fontWeight: '700', marginBottom: '6px', color: 'var(--text-primary)' }}>
             Tối ưu danh mục {stats.topCategory?.name || 'Ăn uống'}
           </div>
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-            Khoản {stats.topCategory?.name || 'Ăn uống'} đang chiếm {Math.round(stats.topCategory?.percentOfTotal || 0)}% tổng chi. Cắt giảm 15% các khoản đồ uống mang đi có thể tiết kiệm được khoảng <strong>300.000đ - 500.000đ</strong> mỗi tháng.
+            {stats.topCategory?.name || 'Ăn uống'} đang chiếm {Math.round(stats.topCategory?.percentOfTotal || 0)}% tổng chi. Cân nhắc giảm bớt các khoản phát sinh để tiết kiệm chi tiêu.
           </p>
         </div>
       </div>
@@ -258,10 +254,10 @@ Bạn muốn tôi giải đáp điều gì về thói quen chi tiêu hoặc các
               <Bot size={18} />
             </div>
             <div>
-              <h3 style={{ fontSize: '15px', fontWeight: '700' }}>Trò Chuyện Với Cố Vấn SpendWise AI</h3>
+              <h3 style={{ fontSize: '15px', fontWeight: '700' }}>Trò chuyện với Cố vấn AI</h3>
               <span style={{ fontSize: '11px', color: 'var(--emerald-400)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
-                {apiKey ? 'Gemini 2.5 Flash Live' : 'Smart Heuristic Engine (Miễn phí)'}
+                {apiKey ? 'Gemini AI' : 'Sẵn sàng tư vấn'}
               </span>
             </div>
           </div>
@@ -272,7 +268,7 @@ Bạn muốn tôi giải đáp điều gì về thói quen chi tiêu hoặc các
               className="btn btn-outline btn-sm"
               style={{ fontSize: '11px', padding: '4px 10px' }}
             >
-              Thêm API Key Gemini
+              Nhập API Key
             </button>
           )}
         </div>
@@ -343,7 +339,7 @@ Bạn muốn tôi giải đáp điều gì về thói quen chi tiêu hoặc các
           {isTyping && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '13px' }}>
               <Bot size={16} />
-              <span>SpendWise AI đang phân tích dữ liệu và soạn câu trả lời...</span>
+              <span>AI đang trả lời...</span>
             </div>
           )}
         </div>
@@ -388,7 +384,7 @@ Bạn muốn tôi giải đáp điều gì về thói quen chi tiêu hoặc các
           <input
             type="text"
             className="input"
-            placeholder="Hỏi AI bất kỳ điều gì về chi tiêu, ngân sách, hóa đơn..."
+            placeholder="Hỏi AI về chi tiêu, tiết kiệm, ngân sách..."
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSendMessage(); }}

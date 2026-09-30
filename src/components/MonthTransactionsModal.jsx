@@ -224,7 +224,7 @@ export default function MonthTransactionsModal({
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <h2 style={{ fontSize: '20px', fontWeight: '800' }}>
-                  Hóa Đơn & Giao Dịch {activeMonthLabel}
+                  Hóa Đơn {activeMonthLabel}
                 </h2>
                 <span style={{
                   fontSize: '11px',
@@ -239,7 +239,7 @@ export default function MonthTransactionsModal({
                 </span>
               </div>
               <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                Tổng hợp toàn bộ các khoản chi tiêu và hóa đơn đã ghi nhận trong {activeMonthLabel}
+                Danh sách hóa đơn trong {activeMonthLabel}
               </p>
             </div>
           </div>
@@ -284,7 +284,7 @@ export default function MonthTransactionsModal({
 
         {/* Scrollable Content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
-          {/* 1 Single Button Dropdown: Chọn xem tháng 6, 7, 8 */}
+          {/* 1 Single Button Dropdown: Chọn xem tháng */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -312,10 +312,10 @@ export default function MonthTransactionsModal({
               </div>
               <div>
                 <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>
-                  Kỳ Dữ Liệu Chi Tiêu
+                  Chọn Tháng
                 </div>
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                  Chọn 1 trong 3 tháng gần nhất để xem hóa đơn & chứng từ
+                  3 tháng gần đây
                 </div>
               </div>
             </div>
@@ -346,7 +346,7 @@ export default function MonthTransactionsModal({
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'rgba(16, 185, 129, 0.15)';
                 }}
-                title="Nhấn để chọn tháng xem hóa đơn (Tháng 6, 7, 8)"
+                title="Chọn tháng xem hóa đơn"
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Calendar size={15} />

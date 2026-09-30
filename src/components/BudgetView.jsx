@@ -68,9 +68,9 @@ export default function BudgetView({
         marginBottom: '28px'
       }}>
         <div>
-          <h1 style={{ fontSize: '26px', marginBottom: '4px' }}>Quản Lý Ngân Sách & Cảnh Báo</h1>
+          <h1 style={{ fontSize: '26px', marginBottom: '4px' }}>Quản Lý Ngân Sách</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-            Thiết lập hạn mức chi tiêu theo tháng và danh mục, nhận cảnh báo tự động khi chạm ngưỡng nguy hiểm
+            Thiết lập và theo dõi hạn mức chi tiêu trong tháng
           </p>
         </div>
 
@@ -78,10 +78,10 @@ export default function BudgetView({
           <button
             onClick={apply503020Rule}
             className="btn btn-secondary"
-            title="Tự động chia ngân sách theo chuẩn tài chính 50/30/20"
+            title="Chia ngân sách theo quy tắc 50/30/20"
           >
             <Sparkles size={16} color="var(--emerald-400)" />
-            <span>Áp dụng quy tắc 50/30/20</span>
+            <span>Quy tắc 50/30/20</span>
           </button>
 
           {editingBudget ? (
@@ -92,7 +92,7 @@ export default function BudgetView({
           ) : (
             <button onClick={() => setEditingBudget(true)} className="btn btn-primary">
               <Edit3 size={16} />
-              <span>Điều Chỉnh Hạn Mức</span>
+              <span>Chỉnh sửa ngân sách</span>
             </button>
           )}
         </div>

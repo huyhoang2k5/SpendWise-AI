@@ -146,7 +146,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
     setParsedData(null);
     setScanError(null);
     setScanProgress(10);
-    setScanStage('Khởi động mô-đun AI Vision & Computer Vision...');
+    setScanStage('Đang xử lý hình ảnh...');
 
     try {
       const result = await parseInvoiceWithAI({
@@ -270,13 +270,13 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
           marginBottom: '14px'
         }}>
           <Sparkles size={15} />
-          <span>Computer Vision & Multimodal OCR</span>
+          <span>Quét Hóa Đơn AI</span>
         </div>
-        <h1 style={{ fontSize: '32px', marginBottom: '8px' }}>
-          AI Đọc Hóa Đơn & Tự Động Phân Loại
+        <h1 style={{ fontSize: '30px', marginBottom: '8px' }}>
+          Quét Hóa Đơn Tự Động
         </h1>
-        <p style={{ color: 'var(--text-secondary)', maxWidth: '640px', margin: '0 auto', fontSize: '15px' }}>
-          Tải ảnh hóa đơn siêu thị, quán cà phê hoặc biên lai điện tử. Hệ thống AI tự động bóc tách chi tiết từng sản phẩm, số tiền và đưa vào nhóm chi tiêu phù hợp.
+        <p style={{ color: 'var(--text-secondary)', maxWidth: '600px', margin: '0 auto', fontSize: '14px' }}>
+          Tải ảnh hoặc chụp hóa đơn để AI tự động nhận diện và lưu chi tiêu.
         </p>
       </div>
 
@@ -296,13 +296,13 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
           marginBottom: '8px'
         }}>
           <Sparkles size={13} />
-          <span>AI Camera Vision</span>
+          <span>Quét Hóa Đơn AI</span>
         </div>
         <h1 style={{ fontSize: '22px', fontWeight: '800', marginBottom: '4px' }}>
-          Quét Hóa Đơn Bằng Camera AI
+          Quét Hóa Đơn AI
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>
-          Chụp ảnh hóa đơn trực tiếp bằng camera điện thoại để AI tự động nhận diện chi tiêu.
+          Chụp hoặc tải ảnh hóa đơn để AI tự động ghi nhận chi tiêu.
         </p>
       </div>
 
@@ -397,7 +397,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
                 Chụp Hóa Đơn Bằng Camera
               </h2>
               <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '18px', lineHeight: 1.45 }}>
-                Mở camera điện thoại chụp ngay hóa đơn ăn uống, siêu thị, vé xe, tiền điện nước
+                Chụp hóa đơn để AI tự động nhận diện chi tiêu
               </p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -417,7 +417,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
                   }}
                 >
                   <Camera size={18} />
-                  <span>Mở Camera Quét Trực Tiếp</span>
+                  <span>Chụp ảnh hóa đơn</span>
                 </button>
 
                 <button
@@ -435,7 +435,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
                   }}
                 >
                   <ImageIcon size={17} color="var(--emerald-400)" />
-                  <span>Chọn ảnh có sẵn từ Thư viện</span>
+                  <span>Chọn từ thư viện ảnh</span>
                 </button>
               </div>
             </div>
@@ -625,7 +625,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
               {scanStage || 'Đang xử lý hình ảnh...'}
             </h3>
             <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-              Độ chính xác cao với bộ lọc tiền tệ Việt Nam (VNĐ, VAT, Giảm giá)
+              Vui lòng đợi trong giây lát...
             </p>
           </div>
         </div>

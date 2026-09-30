@@ -116,20 +116,20 @@ export default function TransactionsView({
         marginBottom: '24px'
       }}>
         <div>
-          <h1 style={{ fontSize: '26px', marginBottom: '4px' }}>Lịch Sử Chi Tiêu & Hóa Đơn</h1>
+          <h1 style={{ fontSize: '26px', marginBottom: '4px' }}>Lịch Sử Chi Tiêu</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-            Xem lại, tìm kiếm, chỉnh sửa và xuất báo cáo toàn bộ các hóa đơn đã được AI ghi nhận (Mục 4.3.4)
+            Quản lý, tìm kiếm và xuất dữ liệu các khoản chi tiêu
           </p>
         </div>
 
         <div style={{ display: 'flex', gap: '10px' }}>
           <button onClick={exportToCSV} className="btn btn-secondary">
             <Download size={16} />
-            <span>Xuất CSV (Excel)</span>
+            <span>Xuất CSV</span>
           </button>
           <button onClick={onNavigateToScanner} className="btn btn-primary">
             <Plus size={16} />
-            <span>Quét Hóa Đơn Mới</span>
+            <span>Quét Hóa Đơn</span>
           </button>
         </div>
       </div>
