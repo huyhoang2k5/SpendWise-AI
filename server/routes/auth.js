@@ -119,7 +119,10 @@ router.put('/profile', protect, async (req, res) => {
     if (roleCode !== undefined) user.roleCode = roleCode;
     if (avatar !== undefined) user.avatar = avatar;
     if (monthlyBudget !== undefined) user.monthlyBudget = Number(monthlyBudget);
-    if (categoryBudgets !== undefined) user.categoryBudgets = categoryBudgets;
+    if (categoryBudgets !== undefined) {
+      user.set('categoryBudgets', categoryBudgets);
+      user.markModified('categoryBudgets');
+    }
 
     // Đổi mật khẩu nếu có
     if (password && password.length >= 4) {
