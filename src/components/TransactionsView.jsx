@@ -106,27 +106,24 @@ export default function TransactionsView({
   };
 
   return (
-    <div style={{ padding: '28px 0 60px' }}>
+    <div className="page-view">
       {/* Top Header */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '16px',
-        marginBottom: '24px'
-      }}>
+      <div className="view-header">
         <div>
-          <h1 style={{ fontSize: '26px' }}>Lịch Sử Chi Tiêu</h1>
+          <h1 style={{ fontSize: '24px' }}>Lịch Sử Chi Tiêu</h1>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="mobile-action-grid-3">
+          <button onClick={onNavigateToScanner} className="btn btn-primary">
+            <Plus size={16} />
+            <span>Quét hóa đơn</span>
+          </button>
           {onClearData && (
             <button 
               onClick={onClearData} 
               className="btn btn-secondary"
               style={{
-                fontSize: '13px',
+                fontSize: '12.5px',
                 color: '#fb7185',
                 borderColor: 'rgba(244, 63, 94, 0.3)',
                 background: 'rgba(244, 63, 94, 0.06)'
@@ -134,16 +131,12 @@ export default function TransactionsView({
               title="Xóa toàn bộ giao dịch trong sổ (yêu cầu mật khẩu)"
             >
               <Trash2 size={15} />
-              <span>Làm trống sổ chi tiêu</span>
+              <span>Làm trống sổ</span>
             </button>
           )}
           <button onClick={exportToCSV} className="btn btn-secondary">
             <Download size={16} />
             <span>Xuất CSV</span>
-          </button>
-          <button onClick={onNavigateToScanner} className="btn btn-primary">
-            <Plus size={16} />
-            <span>Quét hóa đơn</span>
           </button>
         </div>
       </div>

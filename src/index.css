@@ -460,7 +460,7 @@ h1, h2, h3, h4, h5, h6 {
 
   /* Container padding reduction on small screens */
   .container {
-    padding: 0 12px;
+    padding: 0 16px !important;
   }
 
   /* Collapse sidebar+main grids to single column */
@@ -523,21 +523,156 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
-/* ─── Small Mobile: ≤ 480px ─────────────────────────────────────────────── */
+/* ─── Unified Page Layout & Symmetrical Mobile Grids ────────────────────── */
+.page-view {
+  padding: 24px 0 60px;
+}
+
+.view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.view-header-title-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.view-header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mobile-action-grid-2 {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.mobile-action-grid-3 {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.modal-actions-grid {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.avatar-preset-grid {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .page-view {
+    padding: 16px 0 calc(96px + env(safe-area-inset-bottom, 20px)) !important;
+  }
+
+  .view-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 14px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .view-header-title-box {
+    width: 100% !important;
+  }
+
+  .view-header-title-row {
+    justify-content: space-between !important;
+    width: 100% !important;
+  }
+
+  .mobile-action-grid-2 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+
+  .mobile-action-grid-2 .btn {
+    width: 100% !important;
+    justify-content: center !important;
+    height: 42px !important;
+    font-size: 13.5px !important;
+  }
+
+  .mobile-action-grid-3 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+
+  .mobile-action-grid-3 .btn-primary {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    height: 44px !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    justify-content: center !important;
+  }
+
+  .mobile-action-grid-3 .btn-secondary {
+    width: 100% !important;
+    height: 40px !important;
+    justify-content: center !important;
+    font-size: 12.5px !important;
+    padding: 8px 6px !important;
+  }
+
+  .mobile-full-width {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
+
 @media (max-width: 480px) {
-  /* Three-col collapses fully to one column */
-  .grid-3col {
-    grid-template-columns: 1fr;
+  .modal-actions-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    width: 100% !important;
+    gap: 10px !important;
   }
 
-  /* Reduce font sizes slightly */
-  .label {
-    font-size: 12px;
+  .modal-actions-grid .btn {
+    width: 100% !important;
+    justify-content: center !important;
   }
 
-  .input, .select, .textarea {
-    padding: 9px 11px;
-    font-size: 14px;
+  .avatar-preset-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 12px !important;
+    justify-items: center !important;
+  }
+
+  .avatar-preset-grid button {
+    width: 52px !important;
+    height: 52px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .avatar-preset-grid button img {
+    width: 44px !important;
+    height: 44px !important;
   }
 }
 
@@ -568,13 +703,18 @@ h1, h2, h3, h4, h5, h6 {
     display: none !important;
   }
 
+  .container {
+    padding: 0 16px !important;
+    max-width: 100% !important;
+  }
+
   .navbar-header {
     height: 56px !important;
   }
 
   .navbar-header .container {
     height: 56px !important;
-    padding: 0 12px !important;
+    padding: 0 16px !important;
   }
 
   .navbar-top-btn {

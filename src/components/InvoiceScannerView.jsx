@@ -270,7 +270,7 @@ export default function InvoiceScannerView({ onAddTransaction, apiKey, onNavigat
   };
 
   return (
-    <div style={{ padding: '36px 0 60px' }}>
+    <div className="page-view">
       {/* Title Header - Desktop Version */}
       <div className="desktop-only-scanner" style={{ textAlign: 'center', marginBottom: '28px' }}>
         <h1 style={{ fontSize: '28px', fontWeight: '800' }}>

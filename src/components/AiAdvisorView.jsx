@@ -111,10 +111,10 @@ Bạn cần gợi ý hay tối ưu khoản nào hôm nay?`,
   };
 
   return (
-    <div style={{ padding: '28px 0 60px' }}>
+    <div className="page-view">
       {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-        <h1 style={{ fontSize: '28px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        <h1 style={{ fontSize: '26px' }}>
           Trợ Lý Tài Chính AI
         </h1>
       </div>
@@ -122,9 +122,9 @@ Bạn cần gợi ý hay tối ưu khoản nào hôm nay?`,
       {/* AI Insights & Forecasting Cards */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '20px',
-        marginBottom: '28px'
+        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+        gap: '16px',
+        marginBottom: '24px'
       }}>
         {/* Card 1: Spending Forecast */}
         <div className="card" style={{ padding: '22px' }}>

@@ -203,7 +203,7 @@ export default function ClearDataModal({
           </div>
 
           {/* Action Buttons */}
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+          <div className="modal-actions-grid">
             <button
               type="button"
               onClick={handleClose}

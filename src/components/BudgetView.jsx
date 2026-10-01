@@ -234,34 +234,27 @@ export default function BudgetView({
   };
 
   return (
-    <div style={{ padding: '28px 0 60px' }}>
+    <div className="page-view">
       {/* Header */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '16px',
-        marginBottom: '24px'
-      }}>
+      <div className="view-header">
         <div>
-          <h1 style={{ fontSize: '26px' }}>Ngân Sách</h1>
+          <h1 style={{ fontSize: '24px' }}>Ngân Sách</h1>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <div className="mobile-action-grid-2">
           <button
             onClick={apply503020Rule}
             className="btn btn-secondary"
             title="Tự động phân bổ theo quy tắc 50/30/20"
           >
             <Sparkles size={16} color="var(--emerald-400)" />
-            <span>50/30/20</span>
+            <span>Quy tắc 50/30/20</span>
           </button>
 
           {editingBudget ? (
             <button onClick={handleSaveBudgets} className="btn btn-primary">
               <Save size={16} />
-              <span>Lưu</span>
+              <span>Lưu ngân sách</span>
             </button>
           ) : (
             <button onClick={() => setEditingBudget(true)} className="btn btn-primary">

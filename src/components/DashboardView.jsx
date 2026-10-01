@@ -109,19 +109,12 @@ export default function DashboardView({
   });
 
   return (
-    <div style={{ padding: '28px 0 60px' }}>
+    <div className="page-view">
       {/* Top Banner: Greeting & Quick Scan Action */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '16px',
-        marginBottom: '28px'
-      }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-            <h1 style={{ fontSize: '26px' }}>Bảng Thống Kê Chi Tiêu</h1>
+      <div className="view-header">
+        <div className="view-header-title-box">
+          <div className="view-header-title-row">
+            <h1 style={{ fontSize: '24px' }}>Bảng Thống Kê Chi Tiêu</h1>
             <span style={{
               fontSize: '11px',
               padding: '3px 8px',
@@ -132,12 +125,15 @@ export default function DashboardView({
             }}>
               {stats.currentMonthLabel}
             </span>
+          </div>
+
+          <div>
             <button
               onClick={() => setIsPrevMonthModalOpen(true)}
               style={{
-                fontSize: '11px',
-                padding: '3px 10px',
-                borderRadius: '6px',
+                fontSize: '11.5px',
+                padding: '4px 10px',
+                borderRadius: '8px',
                 background: 'rgba(56, 189, 248, 0.12)',
                 color: '#38bdf8',
                 border: '1px solid rgba(56, 189, 248, 0.3)',
@@ -165,7 +161,7 @@ export default function DashboardView({
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div className="mobile-action-grid-2">
           <button
             onClick={() => onNavigateToTab('scanner')}
             className="btn btn-primary"
@@ -178,7 +174,7 @@ export default function DashboardView({
             className="btn btn-secondary"
           >
             <Plus size={17} />
-            <span>+ Thêm</span>
+            <span>Thêm chi tiêu</span>
           </button>
         </div>
       </div>

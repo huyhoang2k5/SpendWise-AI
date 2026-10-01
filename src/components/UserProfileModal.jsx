@@ -210,7 +210,7 @@ export default function UserProfileModal({
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 200,
-      padding: '20px'
+      padding: '12px'
     }}>
       <div 
         className="card"
@@ -230,7 +230,7 @@ export default function UserProfileModal({
       >
         {/* Modal Header */}
         <div style={{
-          padding: '20px 24px',
+          padding: '16px 18px',
           borderBottom: '1px solid var(--border-subtle)',
           display: 'flex',
           alignItems: 'center',
@@ -402,27 +402,28 @@ export default function UserProfileModal({
               <button
                 type="button"
                 onClick={triggerFileInput}
-                className="btn btn-secondary btn-sm"
+                className="btn btn-secondary btn-sm mobile-full-width"
                 style={{
-                  padding: '7px 14px',
+                  padding: '8px 14px',
                   display: 'inline-flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: '6px',
                   borderColor: 'var(--emerald-500)',
                   color: 'var(--emerald-400)'
                 }}
               >
                 <Upload size={14} />
-                <span>Tải ảnh từ máy tính</span>
+                <span>Tải ảnh đại diện lên</span>
               </button>
             </div>
 
             {/* Quick avatar preset selection */}
             <div>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '8px', textAlign: 'center' }}>
                 Hoặc chọn nhanh avatar mẫu có sẵn:
               </span>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <div className="avatar-preset-grid">
                 {PRESET_AVATARS.map((p) => {
                   const isSelected = avatar === p.url;
                   return (

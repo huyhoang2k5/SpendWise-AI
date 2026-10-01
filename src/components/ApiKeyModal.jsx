@@ -95,7 +95,7 @@ export default function ApiKeyModal({ isOpen, onClose, currentKey, onSaveKey }) 
             </span>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+          <div className="modal-actions-grid">
             <button onClick={onClose} className="btn btn-secondary">
               Đóng
             </button>
