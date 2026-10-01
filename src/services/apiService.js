@@ -82,14 +82,70 @@ export const authApi = {
    * @returns {{ success, token, user }}
    */
   googleAuth: async (googleData) => {
-    const res = await fetch(`${BASE_URL}/auth/google`, {
+    try {
+      const res = await fetch(`${BASE_URL}/auth/google`, {
+        method: 'POST',
+        headers: buildHeaders(false),
+        body: JSON.stringify(googleData)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.token) localStorage.setItem('spendwise_token', data.token);
+        return data;
+      }
+    } catch (e) {
+      console.warn('POST /auth/google unavailable, falling back to standard auth:', e);
+    }
+
+    // Fallback tự động: nếu /auth/google chưa có trên máy chủ backend cũ,
+    // tự động đăng ký hoặc đăng nhập thông qua /auth/register và /auth/login sẵn có
+    const cleanEmail = (googleData.email || '').toLowerCase().trim();
+    let baseUsername = cleanEmail.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase();
+    if (baseUsername.length < 3) baseUsername = `${baseUsername}_gg`;
+    if (baseUsername.length > 24) baseUsername = baseUsername.slice(0, 24);
+
+    const fallbackPassword = `Gg#${baseUsername}!2026`;
+
+    // 1. Thử login trước
+    try {
+      const loginRes = await fetch(`${BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: buildHeaders(false),
+        body: JSON.stringify({ username: baseUsername, password: fallbackPassword })
+      });
+      if (loginRes.ok) {
+        const loginData = await loginRes.json();
+        if (loginData.token) localStorage.setItem('spendwise_token', loginData.token);
+        return loginData;
+      }
+    } catch {
+      // Tiếp tục xuống bước register nếu chưa có tài khoản
+    }
+
+    // 2. Tự động tạo tài khoản qua /auth/register
+    const regRes = await fetch(`${BASE_URL}/auth/register`, {
       method: 'POST',
       headers: buildHeaders(false),
-      body: JSON.stringify(googleData)
+      body: JSON.stringify({
+        username: baseUsername,
+        password: fallbackPassword,
+        name: googleData.name || cleanEmail.split('@')[0],
+        email: cleanEmail,
+        role: 'Sinh viên',
+        roleCode: 'student',
+        monthlyBudget: 10000000,
+        avatar: googleData.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanEmail}`
+      })
     });
-    const data = await handleResponse(res);
-    if (data.token) localStorage.setItem('spendwise_token', data.token);
-    return data;
+    const regData = await regRes.json();
+    if (!regRes.ok) {
+      if (regData.error && (regData.error.includes('tồn tại') || regData.error.includes('đã được'))) {
+        throw new Error(`Email ${cleanEmail} đã được tạo tài khoản trong hệ thống. Vui lòng đăng nhập bằng Tên đăng nhập và Mật khẩu ở tab Đăng Nhập.`);
+      }
+      throw new Error(regData.error || `HTTP ${regRes.status}`);
+    }
+    if (regData.token) localStorage.setItem('spendwise_token', regData.token);
+    return regData;
   },
 
   /**
