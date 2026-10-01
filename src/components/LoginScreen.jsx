@@ -113,6 +113,7 @@ export default function LoginScreen({ onLoginSuccess }) {
   const [googleModalTab, setGoogleModalTab] = useState('oauth'); // 'oauth' | 'demo'
   const [isConfiguringClientId, setIsConfiguringClientId] = useState(false);
   const [isCopiedDomains, setIsCopiedDomains] = useState(false);
+  const [isGoogleProcessing, setIsGoogleProcessing] = useState(false);
 
   const [googleAccounts, setGoogleAccounts] = useState(() => {
     try {
@@ -153,7 +154,6 @@ export default function LoginScreen({ onLoginSuccess }) {
 
     setErrorMsg('');
     setGoogleModalError('');
-    setIsSubmitting(true);
 
     try {
       const client = window.google.accounts.oauth2.initTokenClient({
@@ -161,18 +161,20 @@ export default function LoginScreen({ onLoginSuccess }) {
         scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email openid',
         prompt: 'select_account',
         callback: async (tokenResponse) => {
-          if (tokenResponse.error) {
-            console.error('Google OAuth error:', tokenResponse);
+          if (!tokenResponse || tokenResponse.error) {
+            setIsGoogleProcessing(false);
             setIsSubmitting(false);
-            if (tokenResponse.error === 'popup_closed_by_user') {
-              return;
+            if (tokenResponse?.error && tokenResponse.error !== 'popup_closed_by_user') {
+              console.error('Google OAuth error:', tokenResponse);
+              setGoogleModalError(`Lỗi Google OAuth (${tokenResponse.error}): ${tokenResponse.error_description || 'Không thể xác thực với Google.'}`);
+              setGoogleModalTab('oauth');
+              setShowGoogleModal(true);
             }
-            setGoogleModalError(`Lỗi Google OAuth (${tokenResponse.error}): ${tokenResponse.error_description || 'Không thể xác thực với Google.'}`);
-            setGoogleModalTab('oauth');
-            setShowGoogleModal(true);
             return;
           }
 
+          setIsGoogleProcessing(true);
+          setIsSubmitting(true);
           try {
             // Lấy thông tin tài khoản thật từ Google API
             const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -218,14 +220,17 @@ export default function LoginScreen({ onLoginSuccess }) {
             setGoogleModalTab('oauth');
             setShowGoogleModal(true);
           } finally {
+            setIsGoogleProcessing(false);
             setIsSubmitting(false);
           }
         }
       });
 
-      client.requestAccessToken();
+      // Mở popup tài khoản Google, luôn kích hoạt select_account
+      client.requestAccessToken({ prompt: 'select_account' });
     } catch (err) {
       console.error('initTokenClient crash:', err);
+      setIsGoogleProcessing(false);
       setIsSubmitting(false);
       setGoogleModalError(`Không thể mở popup Google: ${err.message}`);
       setGoogleModalTab('oauth');
@@ -264,6 +269,8 @@ export default function LoginScreen({ onLoginSuccess }) {
   const handleGoogleClick = () => {
     setErrorMsg('');
     setGoogleModalError('');
+    setIsGoogleProcessing(false);
+    setIsSubmitting(false);
     setIsOtherAccountMode(false);
     const activeCid = (googleClientId || envGoogleClientId).trim();
     if (activeCid && !isConfiguringClientId) {
@@ -611,11 +618,11 @@ export default function LoginScreen({ onLoginSuccess }) {
                   type="button"
                   onClick={handleGoogleClick}
                   className="google-auth-btn"
-                  disabled={isSubmitting}
+                  disabled={isGoogleProcessing}
                   title="Đăng nhập nhanh bằng tài khoản Google"
                 >
                   <GoogleIcon size={20} />
-                  <span>Log in with Google</span>
+                  <span>{isGoogleProcessing ? 'Đang kết nối Google...' : 'Log in with Google'}</span>
                 </button>
                 <div style={{
                   display: 'flex',
@@ -733,11 +740,11 @@ export default function LoginScreen({ onLoginSuccess }) {
                   type="button"
                   onClick={handleGoogleClick}
                   className="google-auth-btn"
-                  disabled={isSubmitting}
+                  disabled={isGoogleProcessing}
                   title="Đăng ký & kết nối nhanh với tài khoản Google"
                 >
                   <GoogleIcon size={20} />
-                  <span>Log in with Google</span>
+                  <span>{isGoogleProcessing ? 'Đang kết nối Google...' : 'Log in with Google'}</span>
                 </button>
                 <div style={{
                   display: 'flex',
