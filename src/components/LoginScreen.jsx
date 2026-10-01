@@ -18,9 +18,43 @@ import {
   Camera,
   Check,
   X,
-  Sparkles
+  Sparkles,
+  ArrowLeft,
+  Minus,
+  Square,
+  ChevronDown
 } from 'lucide-react';
 import { authApi } from '../services/apiService';
+
+/**
+ * Danh sách tài khoản Google mặc định (Khớp chính xác ảnh tài khoản Chrome của người dùng)
+ */
+const DEFAULT_GOOGLE_ACCOUNTS = [
+  {
+    id: '1',
+    name: 'H H',
+    email: 'lnhhoang2k5@gmail.com',
+    initial: 'H',
+    bg: '#004d40',
+    color: '#4db6ac'
+  },
+  {
+    id: '2',
+    name: 'ngọc Bảo',
+    email: 'lebaongoccute29092009@gmail.com',
+    initial: 'n',
+    bg: '#c5221f',
+    color: '#ffffff'
+  },
+  {
+    id: '3',
+    name: 'Hoàng Hoàng',
+    email: 'huyhoang2k555@gmail.com',
+    initial: 'H',
+    bg: '#4a2c11',
+    color: '#f6bf26'
+  }
+];
 
 /**
  * Official Google 4-Color 'G' SVG
@@ -66,33 +100,31 @@ export default function LoginScreen({ onLoginSuccess }) {
   const [regAvatar, setRegAvatar] = useState('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80');
   const [isCustomRegAvatar, setIsCustomRegAvatar] = useState(false);
 
-  // Google Auth modal state
+  // Google Account Chooser modal state
+  const [googleAccounts, setGoogleAccounts] = useState(() => {
+    try {
+      const saved = localStorage.getItem('spendwise_saved_google_accounts');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.warn(e);
+    }
+    return DEFAULT_GOOGLE_ACCOUNTS;
+  });
+
   const [showGoogleModal, setShowGoogleModal] = useState(false);
-  const [googleEmail, setGoogleEmail] = useState('');
-  const [googleName, setGoogleName] = useState('');
+  const [isOtherAccountMode, setIsOtherAccountMode] = useState(false);
+  const [customEmail, setCustomEmail] = useState('');
+  const [customName, setCustomName] = useState('');
   const [googleModalError, setGoogleModalError] = useState('');
+  const [activeAccountEmail, setActiveAccountEmail] = useState('');
 
   const handleGoogleClick = () => {
     setErrorMsg('');
     setGoogleModalError('');
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    if (window.google?.accounts?.id && clientId) {
-      try {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: handleGoogleCredentialResponse
-        });
-        window.google.accounts.id.prompt((notification) => {
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            setShowGoogleModal(true);
-          }
-        });
-        return;
-      } catch (e) {
-        console.warn('GIS error, fallback to Google modal:', e);
-      }
-    }
-    // Mở popup nhập Gmail / chọn tài khoản Google tức thì
+    setIsOtherAccountMode(false);
     setShowGoogleModal(true);
   };
 
@@ -115,6 +147,7 @@ export default function LoginScreen({ onLoginSuccess }) {
         avatar: payload.picture || '',
         googleId: payload.sub
       });
+      setShowGoogleModal(false);
       onLoginSuccess(user);
     } catch (err) {
       setErrorMsg(err.message || 'Đăng nhập Google thất bại.');
@@ -123,30 +156,79 @@ export default function LoginScreen({ onLoginSuccess }) {
     }
   };
 
-  const handleGoogleSubmit = async (e) => {
-    e.preventDefault();
-    setGoogleModalError('');
-    if (!googleEmail.trim()) {
-      setGoogleModalError('Vui lòng nhập địa chỉ Gmail / Email của bạn!');
-      return;
-    }
-    const cleanEmail = googleEmail.trim().toLowerCase();
-    if (!cleanEmail.includes('@') || !cleanEmail.includes('.')) {
-      setGoogleModalError('Địa chỉ email không hợp lệ (VD: tenban@gmail.com)');
-      return;
-    }
-
+  // Người dùng chọn 1 tài khoản có sẵn trong danh sách Google (như trong ảnh)
+  const handleSelectGoogleAccount = async (acc) => {
+    setActiveAccountEmail(acc.email);
     setIsSubmitting(true);
+    setGoogleModalError('');
     try {
-      const displayName = googleName.trim() || cleanEmail.split('@')[0];
-      const avatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanEmail}`;
+      const avatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${acc.email}`;
       const { user } = await authApi.googleAuth({
-        email: cleanEmail,
-        name: displayName,
+        email: acc.email,
+        name: acc.name,
         avatar: avatarUrl,
         googleId: ''
       });
       setShowGoogleModal(false);
+      onLoginSuccess(user);
+    } catch (err) {
+      setGoogleModalError(err.message || 'Đăng nhập Google thất bại.');
+    } finally {
+      setIsSubmitting(false);
+      setActiveAccountEmail('');
+    }
+  };
+
+  // Người dùng chọn "Sử dụng một tài khoản khác" và nhập Gmail
+  const handleCustomGoogleSubmit = async (e) => {
+    e.preventDefault();
+    setGoogleModalError('');
+    const cleanEmail = customEmail.trim().toLowerCase();
+    if (!cleanEmail.includes('@') || !cleanEmail.includes('.')) {
+      setGoogleModalError('Vui lòng nhập địa chỉ Gmail / Email hợp lệ (VD: tenban@gmail.com)');
+      return;
+    }
+    const cleanName = customName.trim() || cleanEmail.split('@')[0];
+
+    setIsSubmitting(true);
+    try {
+      const avatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanEmail}`;
+      const { user } = await authApi.googleAuth({
+        email: cleanEmail,
+        name: cleanName,
+        avatar: avatarUrl,
+        googleId: ''
+      });
+
+      // Lưu tài khoản mới vào danh sách tài khoản cho các lần sau
+      setGoogleAccounts((prev) => {
+        if (!prev.some((a) => a.email.toLowerCase() === cleanEmail)) {
+          const colors = [
+            { bg: '#004d40', color: '#4db6ac' },
+            { bg: '#1a73e8', color: '#ffffff' },
+            { bg: '#9c27b0', color: '#ffffff' },
+            { bg: '#e65100', color: '#ffffff' }
+          ];
+          const c = colors[prev.length % colors.length];
+          const newAcc = {
+            id: String(Date.now()),
+            name: cleanName,
+            email: cleanEmail,
+            initial: cleanName[0].toUpperCase(),
+            bg: c.bg,
+            color: c.color
+          };
+          const updated = [...prev, newAcc];
+          localStorage.setItem('spendwise_saved_google_accounts', JSON.stringify(updated));
+          return updated;
+        }
+        return prev;
+      });
+
+      setShowGoogleModal(false);
+      setIsOtherAccountMode(false);
+      setCustomEmail('');
+      setCustomName('');
       onLoginSuccess(user);
     } catch (err) {
       setGoogleModalError(err.message || 'Đăng nhập Google thất bại.');
@@ -766,7 +848,7 @@ export default function LoginScreen({ onLoginSuccess }) {
         </div>
       </div>
 
-      {/* GOOGLE QUICK AUTH MODAL */}
+      {/* GOOGLE ACCOUNT CHOOSER POPUP (Chính xác theo giao diện Google Chrome người dùng cung cấp) */}
       {showGoogleModal && (
         <div style={{
           position: 'fixed',
@@ -774,181 +856,416 @@ export default function LoginScreen({ onLoginSuccess }) {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.72)',
+          backgroundColor: 'rgba(0, 0, 0, 0.75)',
           backdropFilter: 'blur(8px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 9999,
-          padding: '20px'
+          padding: '16px'
         }}>
-          <div className="card" style={{
-            maxWidth: '440px',
+          {/* Chrome Popup Window Frame */}
+          <div style={{
+            maxWidth: '480px',
             width: '100%',
-            padding: '26px',
+            backgroundColor: '#1f1f1f',
             borderRadius: '16px',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6)',
-            border: '1px solid var(--border-subtle)',
-            background: 'var(--bg-secondary)',
-            position: 'relative'
+            overflow: 'hidden',
+            boxShadow: '0 25px 65px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.12)',
+            display: 'flex',
+            flexDirection: 'column',
+            animation: 'modalSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+            maxHeight: '92vh'
           }}>
-            {/* Close button */}
-            <button
-              type="button"
-              onClick={() => { setShowGoogleModal(false); setGoogleModalError(''); }}
-              style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--text-muted)',
-                cursor: 'pointer',
-                padding: '6px',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <X size={20} />
-            </button>
-
-            {/* Google Icon Header */}
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-              <div style={{
-                width: '52px',
-                height: '52px',
-                borderRadius: '14px',
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 12px',
-                boxShadow: '0 4px 14px rgba(0, 0, 0, 0.12)'
-              }}>
-                <GoogleIcon size={26} />
+            {/* 1. Chrome Window Titlebar */}
+            <div style={{
+              height: '36px',
+              backgroundColor: '#1a1a1a',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0 12px',
+              borderBottom: '1px solid #2d2d2d',
+              userSelect: 'none'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                <GoogleIcon size={14} />
+                <span style={{ fontSize: '12px', color: '#c4c7c5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  Đăng nhập - Tài khoản Google - Google Chrome
+                </span>
               </div>
-              <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '4px' }}>
-                Đăng ký / Đăng nhập với Google
-              </h3>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                Kết nối nhanh bằng Gmail – không cần nhớ mật khẩu
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowGoogleModal(false)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#9aa0a6',
+                    cursor: 'pointer',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  title="Đóng cửa sổ"
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
 
-            {/* Error Message */}
-            {googleModalError && (
+            {/* 2. Chrome URL Bar */}
+            <div style={{
+              padding: '6px 12px',
+              backgroundColor: '#262626',
+              borderBottom: '1px solid #333333',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
               <div style={{
-                background: 'rgba(244, 63, 94, 0.12)',
-                border: '1px solid rgba(244, 63, 94, 0.3)',
-                padding: '10px 14px',
-                borderRadius: '8px',
-                color: '#fb7185',
-                fontSize: '13px',
+                flex: 1,
+                backgroundColor: '#191919',
+                borderRadius: '20px',
+                padding: '4px 12px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                marginBottom: '16px'
+                border: '1px solid #3c4043'
               }}>
-                <AlertCircle size={16} />
-                <span>{googleModalError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleGoogleSubmit}>
-              <div style={{ marginBottom: '16px' }}>
-                <label className="label">Địa chỉ Gmail của bạn *</label>
-                <div style={{ position: 'relative' }}>
-                  <Mail size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                  <input
-                    type="email"
-                    className="input"
-                    style={{ paddingLeft: '38px', fontFamily: 'var(--font-mono)' }}
-                    required
-                    placeholder="VD: yourname@gmail.com"
-                    value={googleEmail}
-                    onChange={(e) => setGoogleEmail(e.target.value)}
-                    autoFocus
-                  />
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <label className="label">Họ và tên của bạn (Tùy chọn)</label>
-                <div style={{ position: 'relative' }}>
-                  <User size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                  <input
-                    type="text"
-                    className="input"
-                    style={{ paddingLeft: '38px' }}
-                    placeholder="VD: Nguyễn Văn Hoàng"
-                    value={googleName}
-                    onChange={(e) => setGoogleName(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* Quick Suggestion buttons */}
-              <div style={{ marginBottom: '22px' }}>
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
-                  💡 Gợi ý thử nghiệm nhanh:
+                <Lock size={12} color="#9aa0a6" />
+                <span style={{ fontSize: '11.5px', color: '#c4c7c5', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  accounts.google.com/v3/signin/accountchooser?client_id=16523143533...
                 </span>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {[
-                    { email: 'huyhoang18012k5@gmail.com', name: 'Huy Hoàng' },
-                    { email: 'hoang.student@gmail.com', name: 'Hoàng Nguyễn' }
-                  ].map((sug) => (
+              </div>
+            </div>
+
+            {/* 3. Window Body */}
+            <div style={{
+              backgroundColor: '#131314',
+              padding: '24px 20px 18px',
+              overflowY: 'auto'
+            }}>
+              {/* Inner Google Account Card */}
+              <div style={{
+                backgroundColor: '#1e1f20',
+                border: '1px solid #3c4043',
+                borderRadius: '24px',
+                padding: '28px 24px',
+                color: '#e3e3e3'
+              }}>
+                {/* Brand row */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                  <GoogleIcon size={18} />
+                  <span style={{ fontSize: '13.5px', fontWeight: '500', color: '#e3e3e3' }}>
+                    Đăng nhập bằng Google
+                  </span>
+                </div>
+
+                {/* Error Banner */}
+                {googleModalError && (
+                  <div style={{
+                    background: 'rgba(244, 63, 94, 0.15)',
+                    border: '1px solid rgba(244, 63, 94, 0.35)',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    color: '#fb7185',
+                    fontSize: '12.5px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '16px'
+                  }}>
+                    <AlertCircle size={15} />
+                    <span>{googleModalError}</span>
+                  </div>
+                )}
+
+                {!isOtherAccountMode ? (
+                  /* LIST OF SIGNED-IN GOOGLE ACCOUNTS (As in the photo) */
+                  <div>
+                    <h2 style={{
+                      fontSize: '26px',
+                      fontWeight: '400',
+                      color: '#ffffff',
+                      margin: '0 0 6px',
+                      letterSpacing: '-0.3px',
+                      fontFamily: '"Google Sans", Roboto, sans-serif'
+                    }}>
+                      Chọn tài khoản
+                    </h2>
+                    <p style={{ fontSize: '14px', color: '#c4c7c5', margin: '0 0 20px' }}>
+                      Tiếp tục tới <span style={{ color: '#8ab4f8', fontWeight: '500' }}>SpendWise AI</span>
+                    </p>
+
+                    {/* Account Rows */}
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      {googleAccounts.map((acc) => {
+                        const isThisLoading = isSubmitting && activeAccountEmail === acc.email;
+                        return (
+                          <div
+                            key={acc.email}
+                            onClick={() => !isSubmitting && handleSelectGoogleAccount(acc)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '14px',
+                              padding: '12px 10px',
+                              borderBottom: '1px solid #333538',
+                              cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                              borderRadius: '8px',
+                              transition: 'background 0.15s ease',
+                              backgroundColor: isThisLoading ? 'rgba(138, 180, 248, 0.1)' : 'transparent'
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isSubmitting) e.currentTarget.style.backgroundColor = '#2a2b2d';
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isSubmitting) e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
+                          >
+                            {/* Avatar Badge */}
+                            <div style={{
+                              width: '40px',
+                              height: '40px',
+                              borderRadius: '50%',
+                              backgroundColor: acc.bg,
+                              color: acc.color,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '18px',
+                              fontWeight: '600',
+                              flexShrink: 0
+                            }}>
+                              {acc.initial}
+                            </div>
+
+                            {/* Name & Email */}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#e3e3e3',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                              }}>
+                                {acc.name}
+                              </div>
+                              <div style={{
+                                fontSize: '12.5px',
+                                color: '#9aa0a6',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                              }}>
+                                {acc.email}
+                              </div>
+                            </div>
+
+                            {isThisLoading && (
+                              <span style={{ fontSize: '12px', color: '#8ab4f8' }}>
+                                Đang vào...
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      {/* Row 4: Sử dụng một tài khoản khác */}
+                      <div
+                        onClick={() => {
+                          if (!isSubmitting) {
+                            setGoogleModalError('');
+                            setIsOtherAccountMode(true);
+                          }
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '14px',
+                          padding: '13px 10px',
+                          borderBottom: '1px solid #333538',
+                          cursor: 'pointer',
+                          borderRadius: '8px',
+                          transition: 'background 0.15s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#2a2b2d';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }}
+                      >
+                        <div style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '50%',
+                          border: '1px solid #5f6368',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}>
+                          <User size={18} color="#9aa0a6" />
+                        </div>
+                        <div style={{ fontSize: '14px', fontWeight: '500', color: '#e3e3e3' }}>
+                          Sử dụng một tài khoản khác
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Disclaimer text */}
+                    <p style={{
+                      fontSize: '12px',
+                      color: '#9aa0a6',
+                      lineHeight: '1.6',
+                      marginTop: '24px',
+                      marginBottom: 0
+                    }}>
+                      Trước khi sử dụng SpendWise AI, bạn có thể xem{' '}
+                      <span style={{ color: '#8ab4f8', cursor: 'pointer' }}>Chính sách quyền riêng tư</span>{' '}
+                      và{' '}
+                      <span style={{ color: '#8ab4f8', cursor: 'pointer' }}>Điều khoản dịch vụ</span>{' '}
+                      của ứng dụng này.
+                    </p>
+                  </div>
+                ) : (
+                  /* "SỬ DỤNG MỘT TÀI KHOẢN KHÁC" VIEW */
+                  <div>
                     <button
-                      key={sug.email}
                       type="button"
-                      onClick={() => {
-                        setGoogleEmail(sug.email);
-                        setGoogleName(sug.name);
-                      }}
+                      onClick={() => setIsOtherAccountMode(false)}
                       style={{
-                        padding: '4px 10px',
-                        borderRadius: '6px',
-                        fontSize: '11px',
-                        border: googleEmail === sug.email ? '1px solid var(--emerald-400)' : '1px solid var(--border-subtle)',
-                        background: googleEmail === sug.email ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-tertiary)',
-                        color: googleEmail === sug.email ? 'var(--emerald-400)' : 'var(--text-secondary)',
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#8ab4f8',
                         cursor: 'pointer',
+                        fontSize: '13px',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '4px'
+                        gap: '6px',
+                        padding: 0,
+                        marginBottom: '16px'
                       }}
                     >
-                      <Sparkles size={11} color="#34d399" />
-                      <span>{sug.email}</span>
+                      <ArrowLeft size={16} />
+                      <span>Quay lại danh sách tài khoản</span>
                     </button>
-                  ))}
-                </div>
+
+                    <h2 style={{
+                      fontSize: '24px',
+                      fontWeight: '400',
+                      color: '#ffffff',
+                      margin: '0 0 6px',
+                      fontFamily: '"Google Sans", Roboto, sans-serif'
+                    }}>
+                      Đăng nhập tài khoản khác
+                    </h2>
+                    <p style={{ fontSize: '13.5px', color: '#c4c7c5', margin: '0 0 18px' }}>
+                      Nhập địa chỉ Gmail để tiếp tục tới SpendWise AI
+                    </p>
+
+                    <form onSubmit={handleCustomGoogleSubmit}>
+                      <div style={{ marginBottom: '14px' }}>
+                        <label className="label" style={{ color: '#c4c7c5' }}>Email hoặc số điện thoại *</label>
+                        <div style={{ position: 'relative' }}>
+                          <Mail size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9aa0a6' }} />
+                          <input
+                            type="email"
+                            className="input"
+                            style={{
+                              paddingLeft: '38px',
+                              backgroundColor: '#131314',
+                              borderColor: '#3c4043',
+                              color: '#ffffff',
+                              fontFamily: 'var(--font-mono)'
+                            }}
+                            required
+                            placeholder="VD: yourname@gmail.com"
+                            value={customEmail}
+                            onChange={(e) => setCustomEmail(e.target.value)}
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ marginBottom: '20px' }}>
+                        <label className="label" style={{ color: '#c4c7c5' }}>Họ và tên của bạn (Tùy chọn)</label>
+                        <div style={{ position: 'relative' }}>
+                          <User size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9aa0a6' }} />
+                          <input
+                            type="text"
+                            className="input"
+                            style={{
+                              paddingLeft: '38px',
+                              backgroundColor: '#131314',
+                              borderColor: '#3c4043',
+                              color: '#ffffff'
+                            }}
+                            placeholder="VD: Nguyễn Văn Hoàng"
+                            value={customName}
+                            onChange={(e) => setCustomName(e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          onClick={() => setIsOtherAccountMode(false)}
+                          disabled={isSubmitting}
+                          style={{
+                            backgroundColor: 'transparent',
+                            borderColor: '#3c4043',
+                            color: '#8ab4f8'
+                          }}
+                        >
+                          Hủy
+                        </button>
+                        <button
+                          type="submit"
+                          className="btn btn-primary"
+                          disabled={isSubmitting}
+                          style={{
+                            backgroundColor: '#8ab4f8',
+                            color: '#062e6f',
+                            fontWeight: '600'
+                          }}
+                        >
+                          {isSubmitting ? 'Đang xác thực...' : 'Tiếp theo'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
               </div>
 
-              {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  style={{ flex: 1 }}
-                  onClick={() => { setShowGoogleModal(false); setGoogleModalError(''); }}
-                  disabled={isSubmitting}
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="google-auth-btn"
-                  style={{ flex: 2 }}
-                  disabled={isSubmitting}
-                >
-                  <GoogleIcon size={18} />
-                  <span>{isSubmitting ? 'Đang kết nối...' : 'Tiếp Tục Với Google'}</span>
-                </button>
+              {/* 4. Chrome Footer (Outside Card) */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '14px 8px 4px',
+                fontSize: '12px',
+                color: '#9aa0a6',
+                userSelect: 'none'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                  <span>Tiếng Việt</span>
+                  <ChevronDown size={14} />
+                </div>
+                <div style={{ display: 'flex', gap: '18px' }}>
+                  <span style={{ cursor: 'pointer' }}>Trợ giúp</span>
+                  <span style={{ cursor: 'pointer' }}>Quyền riêng tư</span>
+                  <span style={{ cursor: 'pointer' }}>Điều khoản</span>
+                </div>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
