@@ -19,7 +19,11 @@ import {
   Check,
   X,
   Sparkles,
-  ArrowLeft
+  ArrowLeft,
+  Copy,
+  ExternalLink,
+  Key,
+  CheckCircle2
 } from 'lucide-react';
 import { authApi } from '../services/apiService';
 
@@ -97,7 +101,18 @@ export default function LoginScreen({ onLoginSuccess }) {
   const [regAvatar, setRegAvatar] = useState('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80');
   const [isCustomRegAvatar, setIsCustomRegAvatar] = useState(false);
 
-  // Google Account Chooser State
+  // Google Account Chooser & OAuth Hướng 2 State
+  const envGoogleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+  const [googleClientId, setGoogleClientId] = useState(() => {
+    return localStorage.getItem('spendwise_google_client_id') || envGoogleClientId;
+  });
+  const [clientIdInput, setClientIdInput] = useState(() => {
+    return localStorage.getItem('spendwise_google_client_id') || envGoogleClientId;
+  });
+  const [googleModalTab, setGoogleModalTab] = useState('oauth'); // 'oauth' | 'demo'
+  const [isConfiguringClientId, setIsConfiguringClientId] = useState(false);
+  const [isCopiedDomains, setIsCopiedDomains] = useState(false);
+
   const [googleAccounts, setGoogleAccounts] = useState(() => {
     try {
       const saved = localStorage.getItem('spendwise_saved_google_accounts');
@@ -118,15 +133,148 @@ export default function LoginScreen({ onLoginSuccess }) {
   const [customName, setCustomName] = useState('');
   const [googleModalError, setGoogleModalError] = useState('');
 
-  // Bấm nút Google -> Mở ngay bảng chọn tài khoản Google chuẩn Chrome
+  // Kích hoạt Google OAuth thật qua Google Identity Services (GIS)
+  const triggerRealGoogleOAuth = (clientIdToUse) => {
+    const cid = (clientIdToUse || googleClientId || envGoogleClientId).trim();
+    if (!cid) {
+      setGoogleModalTab('oauth');
+      setIsConfiguringClientId(true);
+      setShowGoogleModal(true);
+      return;
+    }
+
+    if (!window.google?.accounts?.oauth2) {
+      setGoogleModalError('Google Identity Services đang được tải, vui lòng chờ trong 1-2 giây rồi bấm lại.');
+      setGoogleModalTab('oauth');
+      setShowGoogleModal(true);
+      return;
+    }
+
+    setErrorMsg('');
+    setGoogleModalError('');
+    setIsSubmitting(true);
+
+    try {
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: cid,
+        scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email openid',
+        prompt: 'select_account',
+        callback: async (tokenResponse) => {
+          if (tokenResponse.error) {
+            console.error('Google OAuth error:', tokenResponse);
+            setIsSubmitting(false);
+            if (tokenResponse.error === 'popup_closed_by_user') {
+              return;
+            }
+            setGoogleModalError(`Lỗi Google OAuth (${tokenResponse.error}): ${tokenResponse.error_description || 'Không thể xác thực với Google.'}`);
+            setGoogleModalTab('oauth');
+            setShowGoogleModal(true);
+            return;
+          }
+
+          try {
+            // Lấy thông tin tài khoản thật từ Google API
+            const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+              headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+            });
+            if (!res.ok) {
+              throw new Error('Không thể tải thông tin hồ sơ từ Google.');
+            }
+            const profile = await res.json();
+
+            // Đăng nhập hoặc tạo mới user trên backend MongoDB
+            const { user } = await authApi.googleAuth({
+              email: profile.email,
+              name: profile.name || profile.email.split('@')[0],
+              avatar: profile.picture || `https://api.dicebear.com/7.x/bottts/svg?seed=${profile.email}`,
+              googleId: profile.sub
+            });
+
+            // Lưu tài khoản vào danh sách recent Google accounts
+            setGoogleAccounts((prev) => {
+              const cleanEmail = profile.email.toLowerCase();
+              if (!prev.some((a) => a.email.toLowerCase() === cleanEmail)) {
+                const newAcc = {
+                  id: String(Date.now()),
+                  name: profile.name || cleanEmail.split('@')[0],
+                  email: cleanEmail,
+                  initial: (profile.name || cleanEmail)[0].toUpperCase(),
+                  bg: '#1a73e8',
+                  color: '#ffffff'
+                };
+                const updated = [newAcc, ...prev];
+                localStorage.setItem('spendwise_saved_google_accounts', JSON.stringify(updated));
+                return updated;
+              }
+              return prev;
+            });
+
+            setShowGoogleModal(false);
+            onLoginSuccess(user);
+          } catch (err) {
+            console.error('Google Auth backend error:', err);
+            setGoogleModalError(err.message || 'Đăng nhập Google thất bại.');
+            setGoogleModalTab('oauth');
+            setShowGoogleModal(true);
+          } finally {
+            setIsSubmitting(false);
+          }
+        }
+      });
+
+      client.requestAccessToken();
+    } catch (err) {
+      console.error('initTokenClient crash:', err);
+      setIsSubmitting(false);
+      setGoogleModalError(`Không thể mở popup Google: ${err.message}`);
+      setGoogleModalTab('oauth');
+      setShowGoogleModal(true);
+    }
+  };
+
+  // Lưu Google Client ID và kích hoạt popup Google ngay lập tức
+  const handleSaveClientIdAndLogin = (e) => {
+    e.preventDefault();
+    const cleanId = clientIdInput.trim();
+    if (!cleanId) {
+      setGoogleModalError('Vui lòng nhập Google Client ID.');
+      return;
+    }
+    if (!cleanId.includes('.apps.googleusercontent.com')) {
+      setGoogleModalError('Google Client ID thường có đuôi: .apps.googleusercontent.com');
+      return;
+    }
+
+    localStorage.setItem('spendwise_google_client_id', cleanId);
+    setGoogleClientId(cleanId);
+    setIsConfiguringClientId(false);
+    setGoogleModalError('');
+    triggerRealGoogleOAuth(cleanId);
+  };
+
+  const copyAuthorizedDomains = () => {
+    const text = `http://localhost:5173\nhttps://huyhoang2k5.github.io\nhttps://spendwise-ai-production.up.railway.app`;
+    navigator.clipboard?.writeText(text);
+    setIsCopiedDomains(true);
+    setTimeout(() => setIsCopiedDomains(false), 2500);
+  };
+
+  // Bấm nút Google -> Nếu đã có Client ID thì mở ngay popup thật, nếu chưa thì mở bảng Hướng 2
   const handleGoogleClick = () => {
     setErrorMsg('');
     setGoogleModalError('');
     setIsOtherAccountMode(false);
-    setShowGoogleModal(true);
+    const activeCid = (googleClientId || envGoogleClientId).trim();
+    if (activeCid && !isConfiguringClientId) {
+      triggerRealGoogleOAuth(activeCid);
+    } else {
+      setGoogleModalTab('oauth');
+      setIsConfiguringClientId(!activeCid);
+      setShowGoogleModal(true);
+    }
   };
 
-  // Người dùng chọn 1 tài khoản trong danh sách Google -> Đăng nhập ngay lập tức
+  // Người dùng chọn 1 tài khoản trong danh sách Google Demo -> Đăng nhập ngay
   const handleSelectGoogleAccount = async (acc) => {
     setActiveAccountEmail(acc.email);
     setIsSubmitting(true);
@@ -912,6 +1060,60 @@ export default function LoginScreen({ onLoginSuccess }) {
               </div>
             </div>
 
+            {/* 2.5 Chrome Tab Switcher (Hướng 2 vs Demo) */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              backgroundColor: '#1b1b1c',
+              borderBottom: '1px solid #333333',
+              padding: '0 16px',
+              gap: '6px'
+            }}>
+              <button
+                type="button"
+                onClick={() => { setGoogleModalTab('oauth'); setGoogleModalError(''); }}
+                style={{
+                  background: googleModalTab === 'oauth' ? '#131314' : 'transparent',
+                  border: 'none',
+                  borderBottom: googleModalTab === 'oauth' ? '2px solid #8ab4f8' : '2px solid transparent',
+                  color: googleModalTab === 'oauth' ? '#8ab4f8' : '#9aa0a6',
+                  padding: '10px 16px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Sparkles size={15} />
+                <span>⚡ Google OAuth Thật (Hướng 2)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setGoogleModalTab('demo'); setGoogleModalError(''); setIsOtherAccountMode(false); }}
+                style={{
+                  background: googleModalTab === 'demo' ? '#131314' : 'transparent',
+                  border: 'none',
+                  borderBottom: googleModalTab === 'demo' ? '2px solid #8ab4f8' : '2px solid transparent',
+                  color: googleModalTab === 'demo' ? '#8ab4f8' : '#9aa0a6',
+                  padding: '10px 16px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <User size={15} />
+                <span>👤 Chọn Tài Khoản Mẫu (Dùng thử ngay)</span>
+              </button>
+            </div>
+
             {/* 3. Window Body */}
             <div style={{
               backgroundColor: '#131314',
@@ -945,7 +1147,214 @@ export default function LoginScreen({ onLoginSuccess }) {
                   </div>
                 )}
 
-                {!isOtherAccountMode ? (
+                {googleModalTab === 'oauth' ? (
+                  /* TAB 1: GOOGLE OAUTH THẬT (HƯỚNG 2) */
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+                      <GoogleIcon size={22} />
+                      <span style={{ fontSize: '13px', fontWeight: '700', color: '#8ab4f8', letterSpacing: '0.4px', textTransform: 'uppercase' }}>
+                        Google OAuth 2.0 • Hướng 2 Chính Thức
+                      </span>
+                    </div>
+
+                    <h2 style={{
+                      fontSize: '26px',
+                      fontWeight: '400',
+                      color: '#ffffff',
+                      margin: '0 0 10px',
+                      fontFamily: '"Google Sans", Roboto, sans-serif'
+                    }}>
+                      Đăng nhập tài khoản Google thực tế
+                    </h2>
+                    <p style={{ fontSize: '14px', color: '#c4c7c5', margin: '0 0 24px', lineHeight: '1.6' }}>
+                      Google OAuth sẽ kích hoạt cửa sổ chính thức của Google (<code style={{ color: '#8ab4f8', background: '#131314', padding: '2px 6px', borderRadius: '4px' }}>accounts.google.com</code>). Trình duyệt sẽ tự động phát hiện tất cả các tài khoản Gmail mà bạn đang đăng nhập trên thiết bị này!
+                    </p>
+
+                    {googleClientId && !isConfiguringClientId ? (
+                      <div style={{
+                        backgroundColor: 'rgba(52, 168, 83, 0.1)',
+                        border: '1px solid rgba(52, 168, 83, 0.35)',
+                        borderRadius: '16px',
+                        padding: '22px',
+                        marginBottom: '20px'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#34A853', fontWeight: '700', fontSize: '15px' }}>
+                          <CheckCircle2 size={18} />
+                          <span>Đã liên kết Google Client ID</span>
+                        </div>
+                        <p style={{ fontSize: '12.5px', color: '#c4c7c5', margin: '0 0 16px', wordBreak: 'break-all', fontFamily: 'var(--font-mono)' }}>
+                          {googleClientId}
+                        </p>
+
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            onClick={() => triggerRealGoogleOAuth(googleClientId)}
+                            disabled={isSubmitting}
+                            style={{
+                              backgroundColor: '#8ab4f8',
+                              color: '#062e6f',
+                              fontWeight: '700',
+                              padding: '10px 22px',
+                              fontSize: '14.5px'
+                            }}
+                          >
+                            <Sparkles size={16} />
+                            <span>{isSubmitting ? 'Đang mở Google...' : 'Mở Cửa Sổ Chọn Tài Khoản Google Ngay'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            onClick={() => setIsConfiguringClientId(true)}
+                            style={{
+                              borderColor: '#3c4043',
+                              color: '#c4c7c5',
+                              fontSize: '13px'
+                            }}
+                          >
+                            Đổi Client ID khác
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        {/* Hướng dẫn 3 bước */}
+                        <div style={{
+                          backgroundColor: '#171819',
+                          border: '1px solid #333538',
+                          borderRadius: '16px',
+                          padding: '20px',
+                          marginBottom: '22px'
+                        }}>
+                          <h3 style={{ fontSize: '15px', color: '#ffffff', margin: '0 0 14px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span>📋</span>
+                            <span>3 bước lấy Google Client ID miễn phí (Mất 2 phút):</span>
+                          </h3>
+                          <ol style={{ margin: 0, paddingLeft: '20px', color: '#c4c7c5', fontSize: '13.5px', lineHeight: '1.75' }}>
+                            <li style={{ marginBottom: '10px' }}>
+                              Truy cập{' '}
+                              <a
+                                href="https://console.cloud.google.com/apis/credentials"
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{ color: '#8ab4f8', textDecoration: 'underline', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}
+                              >
+                                Google Cloud Console Credentials <ExternalLink size={13} />
+                              </a>{' '}
+                              và đăng nhập bằng tài khoản Google của bạn.
+                            </li>
+                            <li style={{ marginBottom: '10px' }}>
+                              Bấm <strong>+ CREATE CREDENTIALS</strong> ➔ Chọn <strong>OAuth client ID</strong> ➔ Chọn loại <strong>Web application</strong>.
+                            </li>
+                            <li style={{ marginBottom: '10px' }}>
+                              Tại mục <strong>Authorized JavaScript origins</strong>, thêm 3 link sau:
+                              <div style={{
+                                background: '#131314',
+                                padding: '10px 14px',
+                                borderRadius: '8px',
+                                margin: '8px 0',
+                                border: '1px solid #2d2d2d',
+                                fontFamily: 'var(--font-mono)',
+                                fontSize: '12px',
+                                color: '#e3e3e3',
+                                lineHeight: '1.8'
+                              }}>
+                                <div>• http://localhost:5173</div>
+                                <div>• https://huyhoang2k5.github.io</div>
+                                <div>• https://spendwise-ai-production.up.railway.app</div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={copyAuthorizedDomains}
+                                style={{
+                                  background: 'rgba(138, 180, 248, 0.12)',
+                                  border: '1px solid rgba(138, 180, 248, 0.35)',
+                                  color: '#8ab4f8',
+                                  padding: '6px 14px',
+                                  borderRadius: '6px',
+                                  fontSize: '12px',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  fontWeight: '500'
+                                }}
+                              >
+                                {isCopiedDomains ? <Check size={14} color="#34A853" /> : <Copy size={14} />}
+                                <span>{isCopiedDomains ? '✓ Đã sao chép 3 link vào Clipboard!' : 'Sao chép 3 link trên'}</span>
+                              </button>
+                            </li>
+                            <li>
+                              Bấm <strong>CREATE</strong> ➔ Sao chép <strong>Client ID</strong> (dạng <code>...apps.googleusercontent.com</code>) và dán vào bên dưới:
+                            </li>
+                          </ol>
+                        </div>
+
+                        {/* Form dán Client ID */}
+                        <form onSubmit={handleSaveClientIdAndLogin}>
+                          <div style={{ marginBottom: '16px' }}>
+                            <label className="label" style={{ color: '#c4c7c5' }}>Nhập hoặc dán Google Client ID *</label>
+                            <div style={{ position: 'relative' }}>
+                              <Key size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9aa0a6' }} />
+                              <input
+                                type="text"
+                                className="input"
+                                style={{
+                                  paddingLeft: '38px',
+                                  backgroundColor: '#131314',
+                                  borderColor: '#3c4043',
+                                  color: '#ffffff',
+                                  fontFamily: 'var(--font-mono)',
+                                  fontSize: '13px'
+                                }}
+                                required
+                                placeholder="VD: 1234567890-abcdefghijklmn.apps.googleusercontent.com"
+                                value={clientIdInput}
+                                onChange={(e) => setClientIdInput(e.target.value)}
+                              />
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                            <span style={{ fontSize: '12px', color: '#9aa0a6' }}>
+                              💡 Hoặc dán Client ID vào tin nhắn cho AI lưu tự động vào mã nguồn.
+                            </span>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                              <button
+                                type="button"
+                                className="btn btn-secondary"
+                                onClick={() => setGoogleModalTab('demo')}
+                                style={{
+                                  borderColor: '#3c4043',
+                                  color: '#c4c7c5'
+                                }}
+                              >
+                                Dùng thử tài khoản mẫu
+                              </button>
+                              <button
+                                type="submit"
+                                className="btn btn-primary"
+                                disabled={isSubmitting}
+                                style={{
+                                  backgroundColor: '#8ab4f8',
+                                  color: '#062e6f',
+                                  fontWeight: '700',
+                                  padding: '9px 18px'
+                                }}
+                              >
+                                {isSubmitting ? 'Đang kích hoạt...' : 'Lưu & Đăng Nhập Google Ngay'}
+                              </button>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* TAB 2: CHỌN TÀI KHOẢN MẪU NHANH (DEMO CHROME CHOOSER) */
+                  !isOtherAccountMode ? (
                   /* 2-COLUMN GOOGLE ACCOUNT CHOOSER (Desktop) / STACKED (Mobile) */
                   <div style={{
                     display: 'flex',
@@ -1220,7 +1629,7 @@ export default function LoginScreen({ onLoginSuccess }) {
                       </div>
                     </form>
                   </div>
-                )}
+                ))}
               </div>
 
               {/* 4. Chrome Footer (Outside Card) */}
