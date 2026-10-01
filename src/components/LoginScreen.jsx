@@ -102,7 +102,8 @@ export default function LoginScreen({ onLoginSuccess }) {
   const [isCustomRegAvatar, setIsCustomRegAvatar] = useState(false);
 
   // Google Account Chooser & OAuth Hướng 2 State
-  const envGoogleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+  const DEFAULT_GOOGLE_CLIENT_ID = '981640112109-lqgb9g36sdv6vv2icbbqamo7v3agpsit.apps.googleusercontent.com';
+  const envGoogleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID;
   const [googleClientId, setGoogleClientId] = useState(() => {
     return localStorage.getItem('spendwise_google_client_id') || envGoogleClientId;
   });

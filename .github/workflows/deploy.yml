@@ -39,7 +39,7 @@ jobs:
           cp dist/index.html dist/404.html
         env:
           VITE_API_URL: https://spendwise-ai-production.up.railway.app/api
-          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID || '981640112109-lqgb9g36sdv6vv2icbbqamo7v3agpsit.apps.googleusercontent.com' }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
