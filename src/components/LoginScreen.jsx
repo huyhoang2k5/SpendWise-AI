@@ -185,10 +185,19 @@ export default function LoginScreen({ onLoginSuccess }) {
             }
             const profile = await res.json();
 
+            // Tính toán họ và tên chuẩn: Google trả về name, given_name, family_name
+            let displayName = (profile.name || '').trim();
+            if (!displayName && (profile.family_name || profile.given_name)) {
+              displayName = [profile.family_name, profile.given_name].filter(Boolean).join(' ').trim();
+            }
+            if (!displayName) {
+              displayName = profile.email.split('@')[0];
+            }
+
             // Đăng nhập hoặc tạo mới user trên backend MongoDB
             const { user } = await authApi.googleAuth({
               email: profile.email,
-              name: profile.name || profile.email.split('@')[0],
+              name: displayName,
               avatar: profile.picture || `https://api.dicebear.com/7.x/bottts/svg?seed=${profile.email}`,
               googleId: profile.sub
             });

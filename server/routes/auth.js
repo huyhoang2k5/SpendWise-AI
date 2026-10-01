@@ -150,9 +150,9 @@ router.post('/google', async (req, res) => {
         monthlyBudget: 10000000
       });
     } else {
-      // Cập nhật thông tin nếu có
+      // Cập nhật thông tin nếu có từ Google
       let modified = false;
-      if (avatar && !user.avatar) {
+      if (avatar && (!user.avatar || user.avatar.includes('dicebear'))) {
         user.avatar = avatar;
         modified = true;
       }
@@ -160,7 +160,7 @@ router.post('/google', async (req, res) => {
         user.googleId = googleId;
         modified = true;
       }
-      if (name && (!user.name || user.name === user.username)) {
+      if (name && name.trim()) {
         user.name = name.trim();
         modified = true;
       }
