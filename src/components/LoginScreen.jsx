@@ -16,10 +16,37 @@ import {
   Building2,
   Upload,
   Camera,
-  Check
+  Check,
+  X,
+  Sparkles
 } from 'lucide-react';
 import { authApi } from '../services/apiService';
 
+/**
+ * Official Google 4-Color 'G' SVG
+ */
+export function GoogleIcon({ size = 19 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={{ flexShrink: 0, display: 'block' }}>
+      <path
+        fill="#4285F4"
+        d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+      />
+    </svg>
+  );
+}
 
 export default function LoginScreen({ onLoginSuccess }) {
   const [tab, setTab] = useState('login'); // 'login' | 'register'
@@ -38,6 +65,95 @@ export default function LoginScreen({ onLoginSuccess }) {
   const [regBudget, setRegBudget] = useState('6500000');
   const [regAvatar, setRegAvatar] = useState('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80');
   const [isCustomRegAvatar, setIsCustomRegAvatar] = useState(false);
+
+  // Google Auth modal state
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
+  const [googleEmail, setGoogleEmail] = useState('');
+  const [googleName, setGoogleName] = useState('');
+  const [googleModalError, setGoogleModalError] = useState('');
+
+  const handleGoogleClick = () => {
+    setErrorMsg('');
+    setGoogleModalError('');
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (window.google?.accounts?.id && clientId) {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleGoogleCredentialResponse
+        });
+        window.google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            setShowGoogleModal(true);
+          }
+        });
+        return;
+      } catch (e) {
+        console.warn('GIS error, fallback to Google modal:', e);
+      }
+    }
+    // Mở popup nhập Gmail / chọn tài khoản Google tức thì
+    setShowGoogleModal(true);
+  };
+
+  const handleGoogleCredentialResponse = async (response) => {
+    try {
+      setIsSubmitting(true);
+      const base64Url = response.credential.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      const payload = JSON.parse(jsonPayload);
+
+      const { user } = await authApi.googleAuth({
+        email: payload.email,
+        name: payload.name || payload.given_name || payload.email.split('@')[0],
+        avatar: payload.picture || '',
+        googleId: payload.sub
+      });
+      onLoginSuccess(user);
+    } catch (err) {
+      setErrorMsg(err.message || 'Đăng nhập Google thất bại.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleSubmit = async (e) => {
+    e.preventDefault();
+    setGoogleModalError('');
+    if (!googleEmail.trim()) {
+      setGoogleModalError('Vui lòng nhập địa chỉ Gmail / Email của bạn!');
+      return;
+    }
+    const cleanEmail = googleEmail.trim().toLowerCase();
+    if (!cleanEmail.includes('@') || !cleanEmail.includes('.')) {
+      setGoogleModalError('Địa chỉ email không hợp lệ (VD: tenban@gmail.com)');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const displayName = googleName.trim() || cleanEmail.split('@')[0];
+      const avatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanEmail}`;
+      const { user } = await authApi.googleAuth({
+        email: cleanEmail,
+        name: displayName,
+        avatar: avatarUrl,
+        googleId: ''
+      });
+      setShowGoogleModal(false);
+      onLoginSuccess(user);
+    } catch (err) {
+      setGoogleModalError(err.message || 'Đăng nhập Google thất bại.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -287,287 +403,555 @@ export default function LoginScreen({ onLoginSuccess }) {
 
           {/* LOGIN FORM */}
           {tab === 'login' && (
-            <form onSubmit={handleLogin}>
-              <div style={{ marginBottom: '16px' }}>
-                <label className="label">Tên đăng nhập</label>
-                <div style={{ position: 'relative' }}>
-                  <User size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                  <input
-                    type="text"
-                    className="input"
-                    style={{ paddingLeft: '38px', fontFamily: 'var(--font-mono)' }}
-                    required
-                    placeholder="Nhập tên đăng nhập"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                  />
+            <div>
+              {/* Google Button - Pixel-perfect to user's screenshot */}
+              <div style={{ marginBottom: '18px' }}>
+                <button
+                  type="button"
+                  onClick={handleGoogleClick}
+                  className="google-auth-btn"
+                  disabled={isSubmitting}
+                  title="Đăng nhập nhanh bằng tài khoản Google"
+                >
+                  <GoogleIcon size={20} />
+                  <span>Log in with Google</span>
+                </button>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  marginTop: '8px'
+                }}>
+                  <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
+                    ⚡ Đăng nhập nhanh 1 chạm bằng tài khoản Gmail
+                  </span>
                 </div>
               </div>
 
-              <div style={{ marginBottom: '22px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <label className="label" style={{ margin: 0 }}>Mật khẩu</label>
-                </div>
-                <div style={{ position: 'relative' }}>
-                  <Lock size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    className="input"
-                    style={{ paddingLeft: '38px', paddingRight: '38px' }}
-                    required
-                    placeholder="Nhập mật khẩu"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={{
-                      position: 'absolute',
-                      right: '12px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'transparent',
-                      border: 'none',
-                      color: 'var(--text-muted)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%', marginBottom: '16px' }} disabled={isSubmitting}>
-                <LogIn size={18} />
-                <span>{isSubmitting ? 'Đang đăng nhập...' : 'Đăng Nhập Vào Sổ Chi Tiêu'}</span>
-              </button>
-
-              <div style={{ textAlign: 'center' }}>
-                <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-                  Chưa có tài khoản?{' '}
-                  <button
-                    type="button"
-                    onClick={() => { setTab('register'); setErrorMsg(''); }}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: 'var(--emerald-400)',
-                      fontWeight: '700',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                      padding: 0
-                    }}
-                  >
-                    Đăng ký tài khoản mới
-                  </button>
+              {/* Divider */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                marginBottom: '18px',
+                gap: '12px'
+              }}>
+                <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', letterSpacing: '0.5px' }}>
+                  HOẶC DÙNG TÊN ĐĂNG NHẬP
                 </span>
+                <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
               </div>
-            </form>
+
+              <form onSubmit={handleLogin}>
+                <div style={{ marginBottom: '16px' }}>
+                  <label className="label">Tên đăng nhập</label>
+                  <div style={{ position: 'relative' }}>
+                    <User size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                    <input
+                      type="text"
+                      className="input"
+                      style={{ paddingLeft: '38px', fontFamily: 'var(--font-mono)' }}
+                      required
+                      placeholder="Nhập tên đăng nhập"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '22px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label className="label" style={{ margin: 0 }}>Mật khẩu</label>
+                  </div>
+                  <div style={{ position: 'relative' }}>
+                    <Lock size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      className="input"
+                      style={{ paddingLeft: '38px', paddingRight: '38px' }}
+                      required
+                      placeholder="Nhập mật khẩu"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--text-muted)',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%', marginBottom: '16px' }} disabled={isSubmitting}>
+                  <LogIn size={18} />
+                  <span>{isSubmitting ? 'Đang đăng nhập...' : 'Đăng Nhập Vào Sổ Chi Tiêu'}</span>
+                </button>
+
+                <div style={{ textAlign: 'center' }}>
+                  <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                    Chưa có tài khoản?{' '}
+                    <button
+                      type="button"
+                      onClick={() => { setTab('register'); setErrorMsg(''); }}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--emerald-400)',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        padding: 0
+                      }}
+                    >
+                      Đăng ký tài khoản mới
+                    </button>
+                  </span>
+                </div>
+              </form>
+            </div>
           )}
 
           {/* REGISTER FORM */}
           {tab === 'register' && (
-            <form onSubmit={handleRegister}>
-              <div style={{ marginBottom: '14px' }}>
-                <label className="label">Tên đăng nhập * (Dùng để đăng nhập)</label>
+            <div>
+              {/* Google Button - Pixel-perfect to user's screenshot */}
+              <div style={{ marginBottom: '18px' }}>
+                <button
+                  type="button"
+                  onClick={handleGoogleClick}
+                  className="google-auth-btn"
+                  disabled={isSubmitting}
+                  title="Đăng ký & kết nối nhanh với tài khoản Google"
+                >
+                  <GoogleIcon size={20} />
+                  <span>Log in with Google</span>
+                </button>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  marginTop: '8px'
+                }}>
+                  <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
+                    ⚡ Đăng ký & kết nối ngay bằng tài khoản Gmail
+                  </span>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                marginBottom: '18px',
+                gap: '12px'
+              }}>
+                <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', letterSpacing: '0.5px' }}>
+                  HOẶC ĐĂNG KÝ BẰNG FORM
+                </span>
+                <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
+              </div>
+
+              <form onSubmit={handleRegister}>
+                <div style={{ marginBottom: '14px' }}>
+                  <label className="label">Tên đăng nhập * (Dùng để đăng nhập)</label>
+                  <div style={{ position: 'relative' }}>
+                    <User size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                    <input
+                      type="text"
+                      className="input"
+                      style={{ paddingLeft: '38px', fontFamily: 'var(--font-mono)' }}
+                      required
+                      placeholder="VD: hoang_nguyen (viết liền không dấu)"
+                      value={regUsername}
+                      onChange={(e) => setRegUsername(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid-2col" style={{ marginBottom: '14px' }}>
+                  <div>
+                    <label className="label">Họ và tên *</label>
+                    <input
+                      type="text"
+                      className="input"
+                      required
+                      placeholder="VD: Nguyễn Văn Hoàng"
+                      value={regName}
+                      onChange={(e) => setRegName(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="label">Gmail / Email liên hệ (Tùy chọn)</label>
+                    <input
+                      type="email"
+                      className="input"
+                      placeholder="VD: hoang@gmail.com"
+                      value={regEmail}
+                      onChange={(e) => setRegEmail(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '14px' }}>
+                  <label className="label">Mật khẩu bảo vệ *</label>
+                  <input
+                    type="password"
+                    className="input"
+                    required
+                    placeholder="Tạo mật khẩu cho tài khoản"
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                  />
+                </div>
+
+                {/* Avatar Upload for Registration */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '14px',
+                  padding: '12px 14px',
+                  borderRadius: '12px',
+                  background: 'var(--bg-tertiary)',
+                  border: '1px solid var(--border-subtle)',
+                  marginBottom: '16px'
+                }}>
+                  <input
+                    type="file"
+                    id="reg-avatar-upload"
+                    accept="image/png, image/jpeg, image/jpg, image/webp"
+                    style={{ display: 'none' }}
+                    onChange={handleRegAvatarUpload}
+                  />
+                  <label 
+                    htmlFor="reg-avatar-upload" 
+                    style={{ position: 'relative', cursor: 'pointer' }}
+                    title="Nhấn để tải ảnh đại diện từ máy tính"
+                  >
+                    <img
+                      src={regAvatar}
+                      alt="Avatar"
+                      style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        border: '2px solid var(--emerald-500)',
+                        boxShadow: '0 0 10px rgba(16, 185, 129, 0.25)'
+                      }}
+                    />
+                    <div style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      right: 0,
+                      width: '18px',
+                      height: '18px',
+                      borderRadius: '50%',
+                      background: 'var(--emerald-500)',
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '10px'
+                    }}>
+                      <Camera size={10} />
+                    </div>
+                  </label>
+
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                        Ảnh Đại Diện Cá Nhân
+                      </span>
+                      {isCustomRegAvatar && (
+                        <span className="badge badge-food" style={{ fontSize: '9px', padding: '1px 5px' }}>
+                          Đã tải ảnh riêng
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '2px 0 6px' }}>
+                      Tải file ảnh từ máy của bạn hoặc dùng ảnh mặc định
+                    </p>
+                    <label
+                      htmlFor="reg-avatar-upload"
+                      className="btn btn-secondary btn-sm"
+                      style={{
+                        padding: '3px 8px',
+                        fontSize: '11px',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <Upload size={12} />
+                      <span>Tải ảnh từ máy tính</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="grid-2col" style={{ marginBottom: '14px' }}>
+                  <div>
+                    <label className="label">Nhóm đối tượng (Gõ tay tùy ý)</label>
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="VD: Sinh viên, Bác sĩ..."
+                      value={regRole}
+                      onChange={(e) => setRegRole(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="label">Ngân sách tháng</label>
+                    <input
+                      type="number"
+                      className="input"
+                      value={regBudget}
+                      onChange={(e) => setRegBudget(e.target.value)}
+                      style={{ fontFamily: 'var(--font-mono)' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Quick role suggestions */}
+                <div style={{ marginBottom: '20px' }}>
+                  <span style={{ fontSize: '10.5px', color: 'var(--text-muted)', display: 'block', marginBottom: '5px' }}>
+                    Gợi ý nhanh (nhấp để chọn hoặc tự do gõ ở trên):
+                  </span>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {['Sinh viên', 'Người đi làm', 'Hộ gia đình', 'Kinh doanh nhỏ', 'Freelancer'].map((sug) => (
+                      <button
+                        key={sug}
+                        type="button"
+                        onClick={() => setRegRole(sug)}
+                        style={{
+                          padding: '2px 7px',
+                          borderRadius: '5px',
+                          fontSize: '10.5px',
+                          border: regRole === sug ? '1px solid var(--emerald-400)' : '1px solid var(--border-subtle)',
+                          background: regRole === sug ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-secondary)',
+                          color: regRole === sug ? 'var(--emerald-400)' : 'var(--text-secondary)',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        + {sug}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }} disabled={isSubmitting}>
+                  <UserPlus size={18} />
+                  <span>{isSubmitting ? 'Đang tạo tài khoản...' : 'Tạo Tài Khoản & Bắt Đầu Sử Dụng'}</span>
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* GOOGLE QUICK AUTH MODAL */}
+      {showGoogleModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.72)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '20px'
+        }}>
+          <div className="card" style={{
+            maxWidth: '440px',
+            width: '100%',
+            padding: '26px',
+            borderRadius: '16px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6)',
+            border: '1px solid var(--border-subtle)',
+            background: 'var(--bg-secondary)',
+            position: 'relative'
+          }}>
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={() => { setShowGoogleModal(false); setGoogleModalError(''); }}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                padding: '6px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <X size={20} />
+            </button>
+
+            {/* Google Icon Header */}
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <div style={{
+                width: '52px',
+                height: '52px',
+                borderRadius: '14px',
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 12px',
+                boxShadow: '0 4px 14px rgba(0, 0, 0, 0.12)'
+              }}>
+                <GoogleIcon size={26} />
+              </div>
+              <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '4px' }}>
+                Đăng ký / Đăng nhập với Google
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                Kết nối nhanh bằng Gmail – không cần nhớ mật khẩu
+              </p>
+            </div>
+
+            {/* Error Message */}
+            {googleModalError && (
+              <div style={{
+                background: 'rgba(244, 63, 94, 0.12)',
+                border: '1px solid rgba(244, 63, 94, 0.3)',
+                padding: '10px 14px',
+                borderRadius: '8px',
+                color: '#fb7185',
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '16px'
+              }}>
+                <AlertCircle size={16} />
+                <span>{googleModalError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleGoogleSubmit}>
+              <div style={{ marginBottom: '16px' }}>
+                <label className="label">Địa chỉ Gmail của bạn *</label>
+                <div style={{ position: 'relative' }}>
+                  <Mail size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                  <input
+                    type="email"
+                    className="input"
+                    style={{ paddingLeft: '38px', fontFamily: 'var(--font-mono)' }}
+                    required
+                    placeholder="VD: yourname@gmail.com"
+                    value={googleEmail}
+                    onChange={(e) => setGoogleEmail(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label className="label">Họ và tên của bạn (Tùy chọn)</label>
                 <div style={{ position: 'relative' }}>
                   <User size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <input
                     type="text"
                     className="input"
-                    style={{ paddingLeft: '38px', fontFamily: 'var(--font-mono)' }}
-                    required
-                    placeholder="VD: hoang_nguyen (viết liền không dấu)"
-                    value={regUsername}
-                    onChange={(e) => setRegUsername(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="grid-2col" style={{ marginBottom: '14px' }}>
-                <div>
-                  <label className="label">Họ và tên *</label>
-                  <input
-                    type="text"
-                    className="input"
-                    required
+                    style={{ paddingLeft: '38px' }}
                     placeholder="VD: Nguyễn Văn Hoàng"
-                    value={regName}
-                    onChange={(e) => setRegName(e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <label className="label">Gmail / Email liên hệ (Tùy chọn)</label>
-                  <input
-                    type="email"
-                    className="input"
-                    placeholder="VD: hoang@gmail.com"
-                    value={regEmail}
-                    onChange={(e) => setRegEmail(e.target.value)}
+                    value={googleName}
+                    onChange={(e) => setGoogleName(e.target.value)}
                   />
                 </div>
               </div>
 
-              <div style={{ marginBottom: '14px' }}>
-                <label className="label">Mật khẩu bảo vệ *</label>
-                <input
-                  type="password"
-                  className="input"
-                  required
-                  placeholder="Tạo mật khẩu cho tài khoản"
-                  value={regPassword}
-                  onChange={(e) => setRegPassword(e.target.value)}
-                />
-              </div>
-
-              {/* Avatar Upload for Registration */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '14px',
-                padding: '12px 14px',
-                borderRadius: '12px',
-                background: 'var(--bg-tertiary)',
-                border: '1px solid var(--border-subtle)',
-                marginBottom: '16px'
-              }}>
-                <input
-                  type="file"
-                  id="reg-avatar-upload"
-                  accept="image/png, image/jpeg, image/jpg, image/webp"
-                  style={{ display: 'none' }}
-                  onChange={handleRegAvatarUpload}
-                />
-                <label 
-                  htmlFor="reg-avatar-upload" 
-                  style={{ position: 'relative', cursor: 'pointer' }}
-                  title="Nhấn để tải ảnh đại diện từ máy tính"
-                >
-                  <img
-                    src={regAvatar}
-                    alt="Avatar"
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      border: '2px solid var(--emerald-500)',
-                      boxShadow: '0 0 10px rgba(16, 185, 129, 0.25)'
-                    }}
-                  />
-                  <div style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    right: 0,
-                    width: '18px',
-                    height: '18px',
-                    borderRadius: '50%',
-                    background: 'var(--emerald-500)',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '10px'
-                  }}>
-                    <Camera size={10} />
-                  </div>
-                </label>
-
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>
-                      Ảnh Đại Diện Cá Nhân
-                    </span>
-                    {isCustomRegAvatar && (
-                      <span className="badge badge-food" style={{ fontSize: '9px', padding: '1px 5px' }}>
-                        Đã tải ảnh riêng
-                      </span>
-                    )}
-                  </div>
-                  <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '2px 0 6px' }}>
-                    Tải file ảnh từ máy của bạn hoặc dùng ảnh mặc định
-                  </p>
-                  <label
-                    htmlFor="reg-avatar-upload"
-                    className="btn btn-secondary btn-sm"
-                    style={{
-                      padding: '3px 8px',
-                      fontSize: '11px',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}
-                  >
-                    <Upload size={12} />
-                    <span>Tải ảnh từ máy tính</span>
-                  </label>
-                </div>
-              </div>
-
-              <div className="grid-2col" style={{ marginBottom: '14px' }}>
-                <div>
-                  <label className="label">Nhóm đối tượng (Gõ tay tùy ý)</label>
-                  <input
-                    type="text"
-                    className="input"
-                    placeholder="VD: Sinh viên, Bác sĩ..."
-                    value={regRole}
-                    onChange={(e) => setRegRole(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="label">Ngân sách tháng</label>
-                  <input
-                    type="number"
-                    className="input"
-                    value={regBudget}
-                    onChange={(e) => setRegBudget(e.target.value)}
-                    style={{ fontFamily: 'var(--font-mono)' }}
-                  />
-                </div>
-              </div>
-
-              {/* Quick role suggestions */}
-              <div style={{ marginBottom: '20px' }}>
-                <span style={{ fontSize: '10.5px', color: 'var(--text-muted)', display: 'block', marginBottom: '5px' }}>
-                  Gợi ý nhanh (nhấp để chọn hoặc tự do gõ ở trên):
+              {/* Quick Suggestion buttons */}
+              <div style={{ marginBottom: '22px' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                  💡 Gợi ý thử nghiệm nhanh:
                 </span>
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                  {['Sinh viên', 'Người đi làm', 'Hộ gia đình', 'Kinh doanh nhỏ', 'Freelancer'].map((sug) => (
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {[
+                    { email: 'huyhoang18012k5@gmail.com', name: 'Huy Hoàng' },
+                    { email: 'hoang.student@gmail.com', name: 'Hoàng Nguyễn' }
+                  ].map((sug) => (
                     <button
-                      key={sug}
+                      key={sug.email}
                       type="button"
-                      onClick={() => setRegRole(sug)}
+                      onClick={() => {
+                        setGoogleEmail(sug.email);
+                        setGoogleName(sug.name);
+                      }}
                       style={{
-                        padding: '2px 7px',
-                        borderRadius: '5px',
-                        fontSize: '10.5px',
-                        border: regRole === sug ? '1px solid var(--emerald-400)' : '1px solid var(--border-subtle)',
-                        background: regRole === sug ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-secondary)',
-                        color: regRole === sug ? 'var(--emerald-400)' : 'var(--text-secondary)',
-                        cursor: 'pointer'
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        border: googleEmail === sug.email ? '1px solid var(--emerald-400)' : '1px solid var(--border-subtle)',
+                        background: googleEmail === sug.email ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-tertiary)',
+                        color: googleEmail === sug.email ? 'var(--emerald-400)' : 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
                       }}
                     >
-                      + {sug}
+                      <Sparkles size={11} color="#34d399" />
+                      <span>{sug.email}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }} disabled={isSubmitting}>
-                <UserPlus size={18} />
-                <span>{isSubmitting ? 'Đang tạo tài khoản...' : 'Tạo Tài Khoản & Bắt Đầu Sử Dụng'}</span>
-              </button>
-
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ flex: 1 }}
+                  onClick={() => { setShowGoogleModal(false); setGoogleModalError(''); }}
+                  disabled={isSubmitting}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="google-auth-btn"
+                  style={{ flex: 2 }}
+                  disabled={isSubmitting}
+                >
+                  <GoogleIcon size={18} />
+                  <span>{isSubmitting ? 'Đang kết nối...' : 'Tiếp Tục Với Google'}</span>
+                </button>
+              </div>
             </form>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

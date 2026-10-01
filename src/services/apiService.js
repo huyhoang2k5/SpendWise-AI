@@ -77,6 +77,22 @@ export const authApi = {
   },
 
   /**
+   * Đăng ký hoặc đăng nhập thông qua Google (Gmail)
+   * @param {{ email, name, avatar, googleId }} googleData
+   * @returns {{ success, token, user }}
+   */
+  googleAuth: async (googleData) => {
+    const res = await fetch(`${BASE_URL}/auth/google`, {
+      method: 'POST',
+      headers: buildHeaders(false),
+      body: JSON.stringify(googleData)
+    });
+    const data = await handleResponse(res);
+    if (data.token) localStorage.setItem('spendwise_token', data.token);
+    return data;
+  },
+
+  /**
    * Xác thực mật khẩu người dùng
    * @returns {{ success, token, user }}
    */

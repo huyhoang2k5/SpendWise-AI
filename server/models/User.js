@@ -28,6 +28,10 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     default: ''
   },
+  googleId: {
+    type: String,
+    default: ''
+  },
   role: {
     type: String,
     trim: true,

@@ -99,6 +99,86 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// ─── POST /api/auth/google — Đăng ký / Đăng nhập bằng Google ───────────
+router.post('/google', async (req, res) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      error: 'Máy chủ đang kết nối lại với MongoDB Atlas. Vui lòng thử lại sau vài giây.'
+    });
+  }
+  try {
+    const { email, name, avatar, googleId } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Vui lòng cung cấp địa chỉ Gmail / Email.' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+
+    // 1. Tìm user theo googleId hoặc email
+    let user = await User.findOne({
+      $or: [
+        { email: cleanEmail },
+        ...(googleId ? [{ googleId }] : [])
+      ]
+    });
+
+    if (!user) {
+      // Đăng ký mới tự động với tài khoản Google
+      let baseUsername = cleanEmail.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase();
+      if (baseUsername.length < 3) baseUsername = `${baseUsername}_gg`;
+      if (baseUsername.length > 24) baseUsername = baseUsername.slice(0, 24);
+
+      let uniqueUsername = baseUsername;
+      let counter = 1;
+      while (await User.findOne({ username: uniqueUsername })) {
+        uniqueUsername = `${baseUsername}${counter}`;
+        counter++;
+      }
+
+      const randomPassword = Math.random().toString(36).slice(-8) + 'Gg1!';
+
+      user = await User.create({
+        username: uniqueUsername,
+        password: randomPassword,
+        name: name?.trim() || cleanEmail.split('@')[0],
+        email: cleanEmail,
+        googleId: googleId || '',
+        avatar: avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanEmail}`,
+        role: 'Sinh viên',
+        roleCode: 'student',
+        monthlyBudget: 10000000
+      });
+    } else {
+      // Cập nhật thông tin nếu có
+      let modified = false;
+      if (avatar && !user.avatar) {
+        user.avatar = avatar;
+        modified = true;
+      }
+      if (googleId && !user.googleId) {
+        user.googleId = googleId;
+        modified = true;
+      }
+      if (name && (!user.name || user.name === user.username)) {
+        user.name = name.trim();
+        modified = true;
+      }
+      if (modified) await user.save();
+    }
+
+    const token = generateToken(user._id);
+    res.json({
+      success: true,
+      token,
+      user: user.toJSON()
+    });
+  } catch (err) {
+    console.error('Google Auth error:', err);
+    res.status(500).json({ error: 'Lỗi máy chủ khi xác thực Google: ' + err.message });
+  }
+});
+
 // ─── GET /api/auth/me — Lấy thông tin user hiện tại ────────────────────
 router.get('/me', protect, async (req, res) => {
   res.json({ success: true, user: req.user });
