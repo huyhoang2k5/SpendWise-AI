@@ -537,7 +537,7 @@ export default function MonthTransactionsModal({
               padding: '16px'
             }}>
               <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                SO VỚI THÁNG NÀY (09/2026)
+                SO VỚI THÁNG NÀY ({analyticsService.getCurrentMonthDisplay()})
               </div>
               <div style={{
                 fontSize: '18px',

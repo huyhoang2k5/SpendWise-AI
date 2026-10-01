@@ -14,6 +14,7 @@ import {
   MoreHorizontal
 } from 'lucide-react';
 import { EXPENSE_CATEGORIES } from '../constants/categories';
+import { analyticsService } from '../services/analyticsService';
 
 const CATEGORY_ICONS = {
   food: Utensils,
@@ -38,7 +39,7 @@ export default function ManualExpenseModal({ isOpen, onClose, onAddTransaction }
   const [total, setTotal] = useState('');
   const [category, setCategory] = useState('food');
   const [customCategory, setCustomCategory] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(() => analyticsService.getTodayDateString());
   const [paymentMethod, setPaymentMethod] = useState('Tiền mặt');
   const [notes, setNotes] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -309,7 +310,7 @@ export default function ManualExpenseModal({ isOpen, onClose, onAddTransaction }
             >
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Calendar size={12} />
-                <span>{date === new Date().toISOString().split('T')[0] ? 'Hôm nay' : date}</span>
+                <span>{date === analyticsService.getTodayDateString() ? 'Hôm nay' : date}</span>
                 <span>•</span>
                 <CreditCard size={12} />
                 <span>{paymentMethod}</span>

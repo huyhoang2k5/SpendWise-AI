@@ -32,7 +32,7 @@ export default function DashboardView({
   const [activeCategoryKey, setActiveCategoryKey] = useState(null);
   const [timeHorizon, setTimeHorizon] = useState('day'); // 'day' | 'week' | 'month'
   const [isPrevMonthModalOpen, setIsPrevMonthModalOpen] = useState(false);
-  const [selectedMonthPrefix, setSelectedMonthPrefix] = useState(() => stats.recentMonths?.[0]?.key || '2026-09');
+  const [selectedMonthPrefix, setSelectedMonthPrefix] = useState(() => stats.recentMonths?.[0]?.key || analyticsService.getRollingRecentMonths(stats.currentMonthPrefix, 1)[0]?.key || '2026-09');
   const [isCardDropdownOpen, setIsCardDropdownOpen] = useState(false);
   const cardDropdownRef = useRef(null);
 
@@ -282,9 +282,9 @@ export default function DashboardView({
           {/* 1 Single Button Dropdown: Chọn xem hóa đơn 3 tháng gần nhất */}
           {(() => {
             const currentSelectedMonthObj = (stats.recentMonths || []).find(m => m.key === selectedMonthPrefix) || stats.recentMonths?.[0] || {
-              key: stats.prevMonthPrefix || '2026-09',
-              label: stats.prevMonthLabel || 'Tháng 09/2026',
-              shortLabel: stats.recentMonths?.[0]?.shortLabel || 'T09/2026',
+              key: stats.prevMonthPrefix,
+              label: stats.prevMonthLabel || 'Tháng trước',
+              shortLabel: stats.recentMonths?.[0]?.shortLabel || (stats.prevMonthPrefix ? `T${stats.prevMonthPrefix.split('-')[1]}/${stats.prevMonthPrefix.split('-')[0]}` : 'Tháng trước'),
               tag: 'Tháng trước',
               total: stats.prevMonthTotal,
               count: stats.prevMonthCount
@@ -771,63 +771,90 @@ export default function DashboardView({
             {/* Custom SVG Bar Chart */}
             <div style={{ width: '100%', height: '230px', position: 'relative', marginTop: '16px' }}>
               {timeHorizon === 'day' && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  height: '190px',
-                  gap: '8px',
-                  borderBottom: '1px solid var(--border-subtle)',
-                  paddingBottom: '4px'
-                }}>
-                  {(() => {
-                    const maxAmount = Math.max(...stats.dailyTimeline.map(d => d.amount), 1);
-                    return stats.dailyTimeline.map((item, idx) => {
-                      const heightPercent = (item.amount / maxAmount) * 100;
-                      const isPeak = stats.peakDay && stats.peakDay.date === item.date;
+                stats.dailyTimeline.length === 0 ? (
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '190px',
+                    borderBottom: '1px solid var(--border-subtle)',
+                    paddingBottom: '4px',
+                    color: 'var(--text-muted)',
+                    textAlign: 'center',
+                    gap: '8px'
+                  }}>
+                    <Calendar size={28} color="var(--text-muted)" style={{ opacity: 0.6 }} />
+                    <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                      Chưa có giao dịch chi tiêu trong {stats.currentMonthLabel}
+                    </span>
+                    <button
+                      onClick={openManualModal}
+                      className="btn btn-outline btn-sm"
+                      style={{ fontSize: '11.5px', padding: '4px 10px', marginTop: '4px' }}
+                    >
+                      + Thêm chi tiêu đầu tiên
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    height: '190px',
+                    gap: '8px',
+                    borderBottom: '1px solid var(--border-subtle)',
+                    paddingBottom: '4px'
+                  }}>
+                    {(() => {
+                      const maxAmount = Math.max(...stats.dailyTimeline.map(d => d.amount), 1);
+                      return stats.dailyTimeline.map((item, idx) => {
+                        const heightPercent = (item.amount / maxAmount) * 100;
+                        const isPeak = stats.peakDay && stats.peakDay.date === item.date;
 
-                      return (
-                        <div
-                          key={idx}
-                          style={{
-                            flex: 1,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            height: '100%',
-                            justifyContent: 'flex-end',
-                            position: 'relative'
-                          }}
-                        >
-                          <div style={{
-                            fontSize: '11px',
-                            fontWeight: '700',
-                            color: isPeak ? '#fb7185' : 'var(--text-secondary)',
-                            fontFamily: 'var(--font-mono)',
-                            marginBottom: '4px'
-                          }}>
-                            {Math.round(item.amount / 1000)}k
-                          </div>
+                        return (
                           <div
+                            key={idx}
                             style={{
-                              width: '100%',
-                              maxWidth: '32px',
-                              height: `${Math.max(8, heightPercent)}%`,
-                              background: isPeak 
-                                ? 'linear-gradient(180deg, #f43f5e, #fb7185)' 
-                                : 'linear-gradient(180deg, #10b981, #06b6d4)',
-                              borderRadius: '6px 6px 0 0',
-                              transition: 'height 0.4s ease'
+                              flex: 1,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              height: '100%',
+                              justifyContent: 'flex-end',
+                              position: 'relative'
                             }}
-                            title={`${item.date}: ${analyticsService.formatCurrency(item.amount)}`}
-                          />
-                          <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px', whiteSpace: 'nowrap' }}>
-                            {item.displayDate}
-                          </span>
-                        </div>
-                      );
-                    });
-                  })()}
-                </div>
+                          >
+                            <div style={{
+                              fontSize: '11px',
+                              fontWeight: '700',
+                              color: isPeak ? '#fb7185' : 'var(--text-secondary)',
+                              fontFamily: 'var(--font-mono)',
+                              marginBottom: '4px'
+                            }}>
+                              {Math.round(item.amount / 1000)}k
+                            </div>
+                            <div
+                              style={{
+                                width: '100%',
+                                maxWidth: '32px',
+                                height: `${Math.max(8, heightPercent)}%`,
+                                background: isPeak 
+                                  ? 'linear-gradient(180deg, #f43f5e, #fb7185)' 
+                                  : 'linear-gradient(180deg, #10b981, #06b6d4)',
+                                borderRadius: '6px 6px 0 0',
+                                transition: 'height 0.4s ease'
+                              }}
+                              title={`${item.date}: ${analyticsService.formatCurrency(item.amount)}`}
+                            />
+                            <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px', whiteSpace: 'nowrap' }}>
+                              {item.displayDate}
+                            </span>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                )
               )}
 
               {timeHorizon === 'week' && (
@@ -877,13 +904,12 @@ export default function DashboardView({
                   borderBottom: '1px solid var(--border-subtle)',
                   paddingBottom: '8px'
                 }}>
-                  {/* Month 6, 7, 8 in chronological order: Month 6 -> Month 7 -> Month 8 */}
+                  {/* 3 tháng trước đó theo thứ tự thời gian */}
                   {[
-                    ...(stats.recentMonths ? [...stats.recentMonths].reverse() : [
-                      { key: '2026-06', label: 'Tháng 06/2026', shortLabel: 'T06/2026', tag: '3 tháng trước', total: 0, count: 0 },
-                      { key: '2026-07', label: 'Tháng 07/2026', shortLabel: 'T07/2026', tag: '2 tháng trước', total: 0, count: 0 },
-                      { key: '2026-08', label: 'Tháng 08/2026', shortLabel: 'T08/2026', tag: 'Tháng trước', total: stats.prevMonthTotal, count: stats.prevMonthCount }
-                    ])
+                    ...(stats.recentMonths && stats.recentMonths.length > 0
+                      ? [...stats.recentMonths].reverse()
+                      : analyticsService.getRollingRecentMonths(stats.currentMonthPrefix, 3).reverse()
+                    )
                   ].map((m) => (
                     <div
                       key={m.key}
@@ -960,7 +986,7 @@ export default function DashboardView({
                     <div>
                       <div style={{ fontSize: '11px', color: '#34d399', fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                         <Sparkles size={12} color="#34d399" />
-                        <span>T09/2026</span>
+                        <span>T{stats.currentMonthDisplay || '10/2026'}</span>
                       </div>
                       <div style={{ fontSize: '10px', color: '#38bdf8', fontWeight: '700', marginTop: '2px' }}>
                         Hiện tại

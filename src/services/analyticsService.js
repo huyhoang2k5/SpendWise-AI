@@ -5,14 +5,25 @@ export const analyticsService = {
     return new Intl.NumberFormat('vi-VN').format(Math.round(amount || 0)) + ' đ';
   },
 
-  // Extract transactions for a specific YYYY-MM
-  getTransactionsByMonth: (transactions = [], monthPrefix = '2026-08') => {
-    return transactions.filter(t => t.date && t.date.startsWith(monthPrefix));
+  // Get today's local date YYYY-MM-DD (safe against UTC timezone rollback in GMT+7)
+  getTodayDateString: () => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  },
+
+  // Extract transactions for a specific YYYY-MM (defaults to current month)
+  getTransactionsByMonth: (transactions = [], monthPrefix) => {
+    const prefix = monthPrefix || analyticsService.getCurrentMonthKey();
+    return transactions.filter(t => t.date && t.date.startsWith(prefix));
   },
 
   // Calculate detailed summary for any specific month
-  getMonthStats: (transactions = [], monthPrefix = '2026-08') => {
-    const monthTx = transactions.filter(t => t.date && t.date.startsWith(monthPrefix));
+  getMonthStats: (transactions = [], monthPrefix) => {
+    const prefix = monthPrefix || analyticsService.getCurrentMonthKey();
+    const monthTx = transactions.filter(t => t.date && t.date.startsWith(prefix));
     const total = monthTx.reduce((sum, t) => sum + (Number(t.total) || 0), 0);
     const count = monthTx.length;
 

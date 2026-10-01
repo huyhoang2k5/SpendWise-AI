@@ -12,6 +12,7 @@ import UserProfileModal from './components/UserProfileModal';
 import ClearDataModal from './components/ClearDataModal';
 import { storageService } from './services/storageService';
 import { authApi, transactionsApi, checkServerHealth } from './services/apiService';
+import { analyticsService } from './services/analyticsService';
 import { CheckCircle2, AlertCircle, Trash2, WifiOff, Loader2 } from 'lucide-react';
 
 export default function App() {
@@ -138,7 +139,7 @@ export default function App() {
       const cleanTx = {
         merchant: (newTx.merchant || 'Hóa đơn mới').trim(),
         total: Math.max(0, Number(newTx.total) || 0),
-        date: newTx.date || new Date().toISOString().split('T')[0],
+        date: newTx.date || analyticsService.getTodayDateString(),
         category: newTx.category || 'other',
         paymentMethod: newTx.paymentMethod || 'Không rõ',
         invoiceNumber: newTx.invoiceNumber || '',
